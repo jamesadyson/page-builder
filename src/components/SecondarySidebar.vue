@@ -1,8 +1,8 @@
 <!-- src/components/SecondarySidebar.vue -->
 <template>
   <div 
-    class="secondary-sidebar bg-white border-r border-gray-200 shadow-sm overflow-y-auto transition-all duration-300"
-    :class="{ 'w-64': visible, 'w-0': !visible }"
+    class="secondary-sidebar bg-white border-r border-gray-200 shadow-sm overflow-y-auto transition-all duration-300 z-50"
+    :class="{ 'sidebar-visible': visible, 'sidebar-hidden': !visible }"
   >
     <div v-if="visible">
       <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -90,13 +90,19 @@ export default {
   left: 100%;
   top: 0;
   height: 100%;
-  z-index: 10;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: width 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.sidebar-visible {
+  width: 260px;
+  transform: translateX(0);
   opacity: 1;
 }
 
-.secondary-sidebar.w-0 {
+.sidebar-hidden {
+  width: 0;
+  transform: translateX(-20px);
   opacity: 0;
   pointer-events: none; /* Prevent interaction when hidden */
 }

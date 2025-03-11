@@ -34,7 +34,7 @@
         </div>
       </div>
 
-      <div v-if="!showElementSelector">
+      <div v-if="!showElementSelector" class="sidebar-sections">
         <div class="px-4 py-2 text-sm font-medium text-gray-600">Sections</div>
         <div
           v-for="(section, index) in sections"
@@ -42,7 +42,7 @@
           class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center section-item relative"
           @mouseenter="handleSectionHover(section.type)"
           @mouseleave="handleSectionLeave"
-          @click="selectSectionType(section)"
+          @click="selectSection(section)"
         >
           <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
             <component :is="section.icon" class="w-5 h-5" />
@@ -54,16 +54,16 @@
             </svg>
           </div>
         </div>
+        
+        <!-- Secondary Sidebar for Section Templates -->
+        <SecondarySidebar
+          :visible="showSecondarySidebar"
+          :section-type="activeSectionType"
+          :templates="activeSectionTemplates"
+          @close="hideSecondarySidebar"
+          @select-template="addSectionTemplate"
+        />
       </div>
-      
-      <!-- Secondary Sidebar for Section Templates -->
-      <SecondarySidebar
-        :visible="showSecondarySidebar"
-        :section-type="activeSectionType"
-        :templates="activeSectionTemplates"
-        @close="handleHideSecondarySidebar"
-        @select-template="addSectionTemplate"
-      />
     </div>
 
     <!-- Main Canvas Area -->
@@ -268,83 +268,82 @@ export default {
       'updateElementData',
       'selectSectionTemplate'
     ]),
-    
-    // Methods to handle sidebar visibility via Vuex
-    handleShowSecondarySidebar(sectionType) {
-      console.log('Dispatching showSecondarySidebar with:', sectionType);
+
+    // Direct implementation of sidebar methods
+    showSecondarySidebar(sectionType) {
+      console.log('Directly calling showSecondarySidebar with:', sectionType);
       this.$store.dispatch('pageBuilder/showSecondarySidebar', sectionType);
     },
     
-    handleHideSecondarySidebar() {
-      console.log('Dispatching hideSecondarySidebar');
+    hideSecondarySidebar() {
+      console.log('Directly calling hideSecondarySidebar');
       this.$store.dispatch('pageBuilder/hideSecondarySidebar');
     },
     
-    // Method for handling section hover
-    handleSectionHover(sectionType) {
-      // Clear any existing timeout
-      this.handleSectionLeave();
-      
-      // Set a new timeout to show the secondary sidebar
-      this.hoverTimeout = setTimeout(() => {
-        if (sectionType === 'testimonials') {
-          console.log('Testimonials hover triggered - showing sidebar');
-          this.handleShowSecondarySidebar(sectionType);
-        }
-      }, this.hoverDelay);
-    },
-    
-    // Method for handling section hover leave
     handleSectionLeave() {
+      // Clear any existing timeout
       if (this.hoverTimeout) {
         clearTimeout(this.hoverTimeout);
         this.hoverTimeout = null;
       }
     },
     
-    // Method for handling section selection
-    selectSectionType(section) {
+    // Now update the section selection and hover methods
+    handleSectionHover(sectionType) {
+      console.log('Section hover detected:', sectionType);
+      // Clear any existing timeout
+      if (this.hoverTimeout) {
+        clearTimeout(this.hoverTimeout);
+      }
+      
+      // Set a new timeout to show the secondary sidebar
+      this.hoverTimeout = setTimeout(() => {
+        if (sectionType === 'testimonials') {
+          console.log('Testimonials hover triggered - showing sidebar');
+          this.showSecondarySidebar(sectionType);
+        }
+      }, this.hoverDelay);
+    },
+    
+    selectSection(section) {
       console.log('Section selected:', section.type);
       // If we have templates for this section type, show them
       if (section.type === 'testimonials') {
-        this.handleShowSecondarySidebar(section.type);
+        this.showSecondarySidebar(section.type);
       } else {
         console.log(`Selected section: ${section.name}`);
       }
     },
     
-    // Method for selecting element from canvas
-    selectElementFromCanvas(index) {
-      this.selectElement(index);
-    },
-    
-    // Method for adding section template
     addSectionTemplate(template) {
       this.selectSectionTemplate(template);
     },
     
-    // Method to check if element is a text element for formatting controls
+    // Helper method for Element Settings panel
     isTextElement() {
       if (this.selectedElementIndex === null) return false;
       
-      const element = this.canvasElements[this.selectedElementIndex];
-      return ['HeadingElement', 'TextElement', 'BulletElement', 'FeatureElement'].includes(element.component);
+      const componentName = this.canvasElements[this.selectedElementIndex].component;
+      return ['TextElement', 'HeadingElement', 'BulletElement'].includes(componentName);
     },
     
-    // Method to get friendly name for element type
-    getElementName(componentType) {
-      const nameMap = {
-        'HeadingElement': 'Heading',
-        'TextElement': 'Text Block',
-        'BulletElement': 'Bullet List',
-        'FeatureElement': 'Feature Block',
-        'TestimonialSection': 'Testimonials'
-      };
+    // Helper for getting element name for drag ghost
+    getElementName(componentName) {
+      switch(componentName) {
+        case 'HeadingElement': return 'Heading';
+        case 'TextElement': return 'Text';
+        case 'BulletElement': return 'List';
+        case 'FeatureElement': return 'Feature';
+        case 'TestimonialSection': return 'Testimonial';
+        default: return 'Element';
+      }
+    },
+    
+    selectElementFromCanvas(index) {
+      this.selectElement(index);
+    },
       
-      return nameMap[componentType] || componentType;
-    },
-    
-    // Drag and drop methods
+    // Improved drag and drop methods
     startDrag(event, index) {
       // Prevent default to avoid text selection
       event.preventDefault();
@@ -522,6 +521,12 @@ export default {
 /* Base styles */
 .page-builder {
   user-select: none; /* Prevent text selection during drag */
+}
+
+/* Make the left sidebar container relative for proper secondary sidebar positioning */
+.sidebar-sections {
+  position: relative;
+  overflow: visible;
 }
 
 /* Dropzone styling */

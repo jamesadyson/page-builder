@@ -67,6 +67,13 @@ export default {
     },
     REMOVE_CANVAS_ELEMENT(state, index) {
       state.canvasElements.splice(index, 1);
+      // Reset selected element if it was the one removed
+      if (state.selectedElementIndex === index) {
+        state.selectedElementIndex = null;
+      } else if (state.selectedElementIndex > index) {
+        // Adjust index for elements that shifted up
+        state.selectedElementIndex--;
+      }
     },
     UPDATE_CANVAS_ELEMENT(state, { index, data }) {
       state.canvasElements[index].data = data;
@@ -78,6 +85,7 @@ export default {
       state.activeSectionType = type;
     },
     SET_SHOW_SECONDARY_SIDEBAR(state, value) {
+      console.log('Mutation: SET_SHOW_SECONDARY_SIDEBAR', value);
       state.showSecondarySidebar = value;
     }
   },
@@ -106,18 +114,43 @@ export default {
         });
       }
     },
-  // Correct action names - no duplicate "Secondary"
-  showSecondarySidebar({ commit }, sectionType) {
-    console.log('Action: showSecondarySidebar called with:', sectionType);
-    commit('SET_ACTIVE_SECTION_TYPE', sectionType);
-    commit('SET_SHOW_SECONDARY_SIDEBAR', true);
-  },
-  hideSecondarySidebar({ commit }) {
-    console.log('Action: hideSecondarySidebar called');
-    commit('SET_SHOW_SECONDARY_SIDEBAR', false);
-  },
-    selectSectionTemplate({ commit, dispatch }, template) {
-      commit('ADD_CANVAS_ELEMENT', template);
+    showSecondarySidebar({ commit }, sectionType) {
+      console.log('Action: showSecondarySidebar called with:', sectionType);
+      // First ensure the section type is set
+      commit('SET_ACTIVE_SECTION_TYPE', sectionType);
+      // Then show the sidebar with a slight delay to ensure state updates in the right order
+      setTimeout(() => {
+        commit('SET_SHOW_SECONDARY_SIDEBAR', true);
+      }, 10);
+    },
+    hideSecondarySidebar({ commit }) {
+      console.log('Action: hideSecondarySidebar called');
+      commit('SET_SHOW_SECONDARY_SIDEBAR', false);
+      // Clear section type after a delay to prevent flickering
+      setTimeout(() => {
+        commit('SET_ACTIVE_SECTION_TYPE', null);
+      }, 300); // Match the CSS transition duration
+    },
+    selectSectionTemplate({ commit, dispatch, state }, templateId) {
+      // Check if the template is a complete object or just an ID
+      let template;
+      if (typeof templateId === 'object') {
+        template = templateId;
+      } else {
+        // Find the template by ID in the active section templates
+        const templates = state.sectionTemplates[state.activeSectionType] || [];
+        template = templates.find(t => t.id === templateId);
+      }
+      
+      // If template found, add it to canvas
+      if (template) {
+        commit('ADD_CANVAS_ELEMENT', {
+          component: template.component,
+          data: template.data
+        });
+      }
+      
+      // Hide the secondary sidebar
       dispatch('hideSecondarySidebar');
     }
   },
