@@ -86,22 +86,22 @@ export default {
 
 <style scoped>
 .secondary-sidebar {
-  position: absolute;
-  left: 100%;
+  position: fixed;
+  left: 64px; /* Width of the primary sidebar */
   top: 0;
   height: 100%;
+  width: 260px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: transform 0.3s ease, opacity 0.3s ease;
+  z-index: 100; /* Ensure it's above other elements */
 }
 
 .sidebar-visible {
-  width: 260px;
   transform: translateX(0);
   opacity: 1;
 }
 
 .sidebar-hidden {
-  width: 0;
   transform: translateX(-20px);
   opacity: 0;
   pointer-events: none; /* Prevent interaction when hidden */

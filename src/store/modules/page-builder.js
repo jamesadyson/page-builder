@@ -87,6 +87,10 @@ export default {
     SET_SHOW_SECONDARY_SIDEBAR(state, value) {
       console.log('Mutation: SET_SHOW_SECONDARY_SIDEBAR', value);
       state.showSecondarySidebar = value;
+    },
+    // Add new mutation for setting the entire canvas elements array
+    SET_CANVAS_ELEMENTS(state, elements) {
+      state.canvasElements = elements;
     }
   },
   actions: {
@@ -146,7 +150,7 @@ export default {
       if (template) {
         commit('ADD_CANVAS_ELEMENT', {
           component: template.component,
-          data: template.data
+          data: JSON.parse(JSON.stringify(template.data)) // Create a deep copy to avoid reference issues
         });
       }
       
