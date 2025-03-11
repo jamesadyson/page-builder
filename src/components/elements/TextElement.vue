@@ -22,7 +22,9 @@
         elementData.isBold ? 'font-bold' : '',
         elementData.isItalic ? 'italic' : '',
         elementData.isUnderline ? 'underline' : '',
-        textAlignClass
+        textAlignClass,
+        elementData.lineHeight || '',
+        elementData.letterSpacing || ''
       ]"
       :style="{ color: elementData.textColor }">
       {{ elementData.text }}

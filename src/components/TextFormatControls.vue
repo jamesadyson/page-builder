@@ -32,6 +32,60 @@
       </div>
     </div>
 
+    <!-- Line Height Controls -->
+    <div class="mb-4">
+      <h3 class="text-sm font-medium text-gray-600 mb-2">Line Height</h3>
+      <div class="relative">
+        <button 
+          class="w-full flex items-center justify-between bg-gray-100 rounded-lg p-3 hover:bg-gray-200"
+          @click="showLineHeightDropdown = !showLineHeightDropdown">
+          <span>{{ getLineHeightLabel() }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        <!-- Line Height Dropdown -->
+        <div v-if="showLineHeightDropdown" class="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 p-2">
+          <button 
+            v-for="(label, value) in lineHeights" 
+            :key="value"
+            class="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 transition-colors"
+            :class="[elementData.lineHeight === value ? 'bg-blue-50 text-blue-500' : 'text-gray-700']"
+            @click="updateLineHeight(value)">
+            {{ label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Letter Spacing Controls -->
+    <div class="mb-4">
+      <h3 class="text-sm font-medium text-gray-600 mb-2">Letter Spacing</h3>
+      <div class="relative">
+        <button 
+          class="w-full flex items-center justify-between bg-gray-100 rounded-lg p-3 hover:bg-gray-200"
+          @click="showLetterSpacingDropdown = !showLetterSpacingDropdown">
+          <span>{{ getLetterSpacingLabel() }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        <!-- Letter Spacing Dropdown -->
+        <div v-if="showLetterSpacingDropdown" class="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 p-2">
+          <button 
+            v-for="(label, value) in letterSpacings" 
+            :key="value"
+            class="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 transition-colors"
+            :class="[elementData.letterSpacing === value ? 'bg-blue-50 text-blue-500' : 'text-gray-700']"
+            @click="updateLetterSpacing(value)">
+            {{ label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Text Formatting Controls -->
     <div class="mb-4">
       <div class="flex items-center bg-gray-100 rounded-lg p-1">
@@ -129,6 +183,8 @@ export default {
     return {
       showAdvancedSizes: false,
       showColorPicker: false,
+      showLineHeightDropdown: false,
+      showLetterSpacingDropdown: false,
       sizeMap: {
         'XS': 'text-xs',
         'S': 'text-sm',
@@ -147,6 +203,22 @@ export default {
         'text-4xl': '4XL',
         'text-5xl': '5XL',
         'text-6xl': '6XL',
+      },
+      lineHeights: {
+        'leading-none': 'None (1)',
+        'leading-tight': 'Tight (1.25)',
+        'leading-snug': 'Snug (1.375)',
+        'leading-normal': 'Normal (1.5)',
+        'leading-relaxed': 'Relaxed (1.625)',
+        'leading-loose': 'Loose (2)',
+      },
+      letterSpacings: {
+        'tracking-tighter': 'Tighter (-0.05em)',
+        'tracking-tight': 'Tight (-0.025em)',
+        'tracking-normal': 'Normal (0)',
+        'tracking-wide': 'Wide (0.025em)',
+        'tracking-wider': 'Wider (0.05em)',
+        'tracking-widest': 'Widest (0.1em)',
       },
       colors: [
         { name: 'Black', value: '#000000' },
@@ -182,6 +254,26 @@ export default {
     updateTextColor(color) {
       this.$emit('update', { ...this.elementData, textColor: color });
       this.showColorPicker = false;
+    },
+    updateLineHeight(lineHeight) {
+      this.$emit('update', { ...this.elementData, lineHeight });
+      this.showLineHeightDropdown = false;
+    },
+    updateLetterSpacing(letterSpacing) {
+      this.$emit('update', { ...this.elementData, letterSpacing });
+      this.showLetterSpacingDropdown = false;
+    },
+    getLineHeightLabel() {
+      if (!this.elementData.lineHeight) {
+        return 'Default';
+      }
+      return this.lineHeights[this.elementData.lineHeight] || 'Default';
+    },
+    getLetterSpacingLabel() {
+      if (!this.elementData.letterSpacing) {
+        return 'Default';
+      }
+      return this.letterSpacings[this.elementData.letterSpacing] || 'Default';
     }
   }
 };

@@ -17,7 +17,9 @@
       :class="[
         'list-disc pl-5',
         elementData.textAlign === 'center' ? 'text-center' : '',
-        elementData.textAlign === 'right' ? 'text-right' : ''
+        elementData.textAlign === 'right' ? 'text-right' : '',
+        elementData.lineHeight || '',
+        elementData.letterSpacing || ''
       ]">
       <li 
         v-for="(item, index) in elementData.items" 

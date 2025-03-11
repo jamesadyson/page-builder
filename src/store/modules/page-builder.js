@@ -15,7 +15,13 @@ export default {
           name: 'Heading', 
           icon: 'HeadingIcon',
           component: 'HeadingElement',
-          data: { text: 'Your Heading', level: 1 } 
+          data: { 
+            text: 'Your Heading', 
+            level: 1, 
+            fontSize: 'text-3xl', 
+            isBold: true, 
+            textAlign: 'center' 
+          } 
         },
         { 
           name: 'Text Block', 

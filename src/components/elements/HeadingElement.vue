@@ -19,11 +19,13 @@
       @input="updateContent"
       :class="[
         'focus:outline-none focus:ring-2 focus:ring-blue-200 px-2 py-1 rounded',
-        elementData.fontSize || 'text-base',
+        elementData.fontSize || 'text-3xl',
         elementData.isBold ? 'font-bold' : '',
         elementData.isItalic ? 'italic' : '',
         elementData.isUnderline ? 'underline' : '',
-        textAlignClass
+        textAlignClass,
+        elementData.lineHeight || '',
+        elementData.letterSpacing || ''
       ]"
       :style="{ color: elementData.textColor }">
       {{ elementData.text }}
