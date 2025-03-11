@@ -502,14 +502,14 @@ export default {
         return;
       }
       
-      // Handle the special case of dropping at the top
-      if (toIndex === -1) {
-        toIndex = 0;
-      } else if (fromIndex < toIndex) {
-        // If moving down, adjust target index
-        toIndex += 1;
-      }
-      
+ // Handle the special case of dropping at the top
+  if (toIndex === -1) {
+    toIndex = 0;
+  }
+  // Removing the problematic adjustment:
+  // We don't need to adjust the target index when moving down
+  // because the dropzone index already accounts for this
+  
       // Ensure toIndex is valid
       toIndex = Math.max(0, Math.min(this.canvasElements.length, toIndex));
       
