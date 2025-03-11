@@ -68,8 +68,8 @@
       </div>
 
       <!-- Canvas -->
-      <div class="flex-1 p-8 overflow-y-auto">
-        <div class="bg-white shadow-sm rounded-md mx-auto max-w-4xl min-h-[600px] relative">
+      <div class="flex-1 p-8 overflow-y-auto" ref="canvasArea">
+        <div class="bg-white shadow-sm rounded-md mx-auto max-w-4xl min-h-[600px] relative canvas-container">
           <div v-if="canvasElements.length === 0" class="absolute inset-0 flex items-center justify-center">
             <button
               @click="openElementSelector"
@@ -82,15 +82,40 @@
           </div>
 
           <div v-else>
+            <!-- Dropzone indicator for the top position -->
+            <div 
+              v-show="isDragging" 
+              class="dropzone w-full my-1 border-2 border-transparent"
+              :class="{'border-blue-500': dropzoneIndex === -1}"
+              @mouseenter="setDropzoneIndex(-1)"
+            ></div>
+            
             <!-- Render canvas elements -->
-            <component
-              v-for="(element, index) in canvasElements"
+            <div 
+              v-for="(element, index) in canvasElements" 
               :key="index"
-              :is="element.component"
-              :element-data="element.data"
-              @select="selectElementFromCanvas(index)"
-              @delete="removeElement(index)"
-            />
+              class="element-wrapper relative"
+              :class="{'shadow-lg': draggedElementIndex === index}"
+              :data-element-index="index"
+            >
+              <component
+                :is="element.component"
+                :element-data="element.data"
+                @select="selectElementFromCanvas(index)"
+                @delete="removeElement(index)"
+                @dragstart="startDrag($event, index)"
+                :class="{'opacity-50': isDragging && draggedElementIndex === index}"
+              />
+              
+              <!-- Dropzone indicator after this element -->
+              <div 
+                v-show="isDragging && draggedElementIndex !== index" 
+                class="dropzone w-full my-1 border-2 border-transparent"
+                :class="{'border-blue-500': dropzoneIndex === index}"
+                @mouseenter="setDropzoneIndex(index)"
+                :data-dropzone-index="index"
+              ></div>
+            </div>
             
             <!-- Add element button after content -->
             <div class="py-4 flex justify-center">
@@ -139,6 +164,18 @@
         />
       </div>
     </div>
+    
+    <!-- Drag ghost element (follows cursor when dragging) -->
+    <div 
+      v-show="isDragging" 
+      ref="dragGhost"
+      class="fixed pointer-events-none bg-white shadow-xl border border-blue-500 rounded p-2 z-50 opacity-80"
+      :style="{ top: dragGhostPosition.y + 'px', left: dragGhostPosition.x + 'px', width: '200px' }"
+    >
+      <div v-if="draggedElementIndex !== null && canvasElements[draggedElementIndex]" class="text-sm font-medium">
+        Moving: {{ getElementName(canvasElements[draggedElementIndex].component) }}
+      </div>
+    </div>
   </div>
 </template>
 
@@ -165,6 +202,12 @@ export default {
       sidebarTitle: 'Add section',
       selectedElementIndex: null,
       canvasElements: [],
+      // Drag and drop state
+      isDragging: false,
+      draggedElementIndex: null,
+      dropzoneIndex: null,
+      dragStartY: 0,
+      dragGhostPosition: { x: 0, y: 0 },
       sections: [
         { name: 'Hero', icon: 'HeroIcon' },
         { name: 'Product', icon: 'ProductIcon' },
@@ -183,8 +226,8 @@ export default {
           data: { 
             text: 'Your Heading', 
             level: 1,
-            fontSize: null,
-            isBold: false,
+            fontSize: 'text-2xl',
+            isBold: true,
             isItalic: false,
             isUnderline: false,
             textAlign: 'left',
@@ -278,19 +321,166 @@ export default {
       
       const componentName = this.canvasElements[this.selectedElementIndex].component;
       return ['TextElement', 'HeadingElement', 'BulletElement', 'FeatureElement'].includes(componentName);
+    },
+    getElementName(componentName) {
+      const elementMap = {
+        'HeadingElement': 'Heading',
+        'TextElement': 'Text Block',
+        'BulletElement': 'Bullet List',
+        'FeatureElement': 'Feature Block'
+      };
+      return elementMap[componentName] || 'Element';
+    },
+    // Drag and drop methods
+    startDrag(event, index) {
+      // Save the starting position
+      this.isDragging = true;
+      this.draggedElementIndex = index;
+      this.dragStartY = event.clientY;
+      
+      // Initialize the ghost element position
+      this.updateDragGhostPosition(event.clientX, event.clientY);
+      
+      // Add event listeners for drag movement and drop
+      document.addEventListener('mousemove', this.handleDragMove);
+      document.addEventListener('mouseup', this.handleDragEnd);
+      
+      // Prevent default text selection and other browser behaviors
+      event.preventDefault();
+      
+      // Add a class to the body to indicate dragging state
+      document.body.classList.add('is-dragging');
+    },
+    
+    handleDragMove(event) {
+      if (!this.isDragging) return;
+      
+      // Update the visual ghost element that follows the cursor
+      this.updateDragGhostPosition(event.clientX, event.clientY);
+      
+      // The dropzone indicators already handle their hover state through mouseenter events
+    },
+    
+    updateDragGhostPosition(x, y) {
+      // Position the ghost element slightly offset from the cursor
+      this.dragGhostPosition = {
+        x: x + 15,
+        y: y - 15
+      };
+    },
+    
+    setDropzoneIndex(index) {
+      this.dropzoneIndex = index;
+    },
+    
+    handleDragEnd() {
+      if (!this.isDragging) return;
+      
+      // Move the element to the new position if a dropzone was selected
+      if (this.dropzoneIndex !== null) {
+        this.moveElement(this.draggedElementIndex, this.dropzoneIndex);
+      }
+      
+      // Clean up
+      this.isDragging = false;
+      document.body.classList.remove('is-dragging');
+      
+      // Remove event listeners
+      document.removeEventListener('mousemove', this.handleDragMove);
+      document.removeEventListener('mouseup', this.handleDragEnd);
+      
+      // Reset drag state
+      this.draggedElementIndex = null;
+      this.dropzoneIndex = null;
+    },
+    
+    moveElement(fromIndex, toIndex) {
+      // Don't move if trying to drop at the same position
+      if (fromIndex === toIndex) return;
+      
+      // Handle the special case of dropping above the first element
+      if (toIndex === -1) {
+        toIndex = 0;
+      } else if (fromIndex < toIndex) {
+        // If moving down, we insert after the target index
+        toIndex += 1;
+      }
+      
+      // Get the element being moved
+      const elementToMove = this.canvasElements[fromIndex];
+      
+      // Create a new array with the element moved to the correct position
+      const newElements = [...this.canvasElements];
+      newElements.splice(fromIndex, 1);
+      newElements.splice(toIndex, 0, elementToMove);
+      
+      // Update the canvas elements array
+      this.canvasElements = newElements;
+      
+      // Update selected element index if needed
+      if (this.selectedElementIndex === fromIndex) {
+        this.selectedElementIndex = toIndex;
+      } else if (this.selectedElementIndex > fromIndex && this.selectedElementIndex <= toIndex) {
+        this.selectedElementIndex--;
+      } else if (this.selectedElementIndex < fromIndex && this.selectedElementIndex >= toIndex) {
+        this.selectedElementIndex++;
+      }
     }
+  },
+  mounted() {
+    // No global events needed on mount - they're added when drag starts
+  },
+  beforeDestroy() {
+    // Clean up any event listeners that might still be active
+    document.removeEventListener('mousemove', this.handleDragMove);
+    document.removeEventListener('mouseup', this.handleDragEnd);
   }
 };
 </script>
 
 <style scoped>
-/* Optional: Add smooth transitions for a better UX */
-.page-builder .fade-enter-active, 
-.page-builder .fade-leave-active {
-  transition: opacity 0.3s;
+/* Base styles */
+.page-builder {
+  user-select: none; /* Prevent text selection during drag */
 }
-.page-builder .fade-enter, 
-.page-builder .fade-leave-to {
-  opacity: 0;
+
+/* Dropzone styling */
+.dropzone {
+  height: 6px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.dropzone:hover, .dropzone.border-blue-500 {
+  height: 10px;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Element being dragged */
+.is-dragging .element-wrapper {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.element-wrapper {
+  position: relative;
+}
+
+/* Ghost element animations */
+@keyframes pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.6; }
+}
+
+.is-dragging + [ref="dragGhost"] {
+  animation: pulse 1.5s infinite;
+}
+
+/* Improve the dragging handle appearance */
+:deep(.cursor-move) {
+  cursor: grab;
+}
+
+:deep(.cursor-move:active) {
+  cursor: grabbing;
 }
 </style>
