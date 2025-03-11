@@ -17,7 +17,7 @@
           v-for="(element, index) in basicElements"
           :key="'basic-' + index"
           class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center"
-          @click="addElementToCanvas(element, activeInsertionIndex !== null ? activeInsertionIndex : null)"
+          @click="insertElement(element, activeInsertionIndex !== null ? activeInsertionIndex : canvasElements.length)"
         >
           <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
             <component :is="element.icon" class="w-5 h-5" />
@@ -30,7 +30,7 @@
           v-for="(element, index) in interactiveElements"
           :key="'interactive-' + index"
           class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center"
-          @click="addElementToCanvas(element, activeInsertionIndex !== null ? activeInsertionIndex : null)"
+          @click="insertElement(element, activeInsertionIndex !== null ? activeInsertionIndex : canvasElements.length)"
         >
           <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
             <component :is="element.icon" class="w-5 h-5" />
@@ -66,7 +66,7 @@
           :section-type="activeSectionType"
           :templates="activeSectionTemplates"
           @close="toggleSecondarySidebar(false)"
-          @select-template="(template) => addSectionTemplate(template, activeInsertionIndex !== null ? activeInsertionIndex : null)"
+          @select-template="insertSectionTemplate"
           @mouse-leave="handleSecondarySidebarLeave"
           @mouse-enter="handleSecondarySidebarEnter"
         />
@@ -96,30 +96,24 @@
         <div class="bg-white shadow-sm rounded-md mx-auto max-w-4xl min-h-[600px] relative canvas-container">
           <div v-if="canvasElements.length === 0" class="absolute inset-0 flex items-center justify-center">
             <!-- Initial empty state -->
-            <div 
-              class="insertion-zone w-full py-4 flex justify-center items-center"
-              @mouseenter="setHoveredInsertionIndex(0)"
-              @mouseleave="clearHoveredInsertionIndex"
+            <button
+              @click="activateInsertionPoint(0)"
+              class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50"
             >
-              <button
-                @click="activateInsertionPoint(0)"
-                class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
-            </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
           </div>
 
           <div v-else>
-            <!-- Top insertion zone -->
+            <!-- Top insertion zone (index 0) -->
             <div 
               class="insertion-zone w-full"
-              :class="{'active': hoveredInsertionIndex === 0 || (isDragging && dropzoneIndex === 0)}"
+              :class="{'active': hoveredInsertionIndex === 0}"
               @mouseenter="setHoveredInsertionIndex(0)"
               @mouseleave="clearHoveredInsertionIndex"
-              data-dropzone-index="0"
+              data-index="0"
             >
               <div class="relative flex justify-center w-full">
                 <div class="insertion-line"></div>
@@ -135,14 +129,14 @@
               </div>
             </div>
             
-            <!-- Render canvas elements -->
+            <!-- Render each element with an insertion zone after it -->
             <div 
               v-for="(element, index) in canvasElements" 
               :key="index"
               class="element-wrapper relative"
-              :class="{'shadow-lg': draggedElementIndex === index}"
-              :data-element-index="index"
+              :class="{'opacity-50': isDragging && draggedElementIndex === index}"
             >
+              <!-- The actual element component -->
               <component
                 :is="element.component"
                 :element-data="element.data"
@@ -153,13 +147,13 @@
                 :class="{'opacity-50': isDragging && draggedElementIndex === index}"
               />
               
-              <!-- Insertion zone after this element -->
+              <!-- Insertion zone after this element (index: index+1) -->
               <div 
                 class="insertion-zone w-full"
-                :class="{'active': hoveredInsertionIndex === index + 1 || (isDragging && dropzoneIndex === index)}"
+                :class="{'active': hoveredInsertionIndex === index + 1}"
                 @mouseenter="setHoveredInsertionIndex(index + 1)"
                 @mouseleave="clearHoveredInsertionIndex"
-                :data-dropzone-index="index"
+                :data-index="index + 1"
               >
                 <div class="relative flex justify-center w-full">
                   <div class="insertion-line"></div>
@@ -227,8 +221,8 @@
     <!-- Drag ghost element - This follows the cursor during drag -->
     <div 
       v-if="isDragging && draggedElementIndex !== null" 
-      class="fixed pointer-events-none bg-white shadow-lg border border-blue-500 rounded p-2 z-50 opacity-75"
-      :style="{ top: `${dragGhostPosition.y}px`, left: `${dragGhostPosition.x}px`, width: '200px' }"
+      class="drag-ghost"
+      :style="{ top: `${dragGhostPosition.y}px`, left: `${dragGhostPosition.x}px` }"
     >
       <div class="text-sm font-medium truncate">
         Moving: {{ getElementName(canvasElements[draggedElementIndex].component) }}
@@ -269,8 +263,6 @@ export default {
       // Drag and drop state
       isDragging: false,
       draggedElementIndex: null,
-      dropzoneIndex: null,
-      dragStartPosition: { x: 0, y: 0 },
       dragGhostPosition: { x: 0, y: 0 },
       
       // Hover timeouts for section selection
@@ -309,12 +301,37 @@ export default {
   },
   methods: {
     ...mapActions('pageBuilder', [
-      'insertElementAtIndex',
       'removeElement', 
       'selectElement',
-      'updateElementData',
-      'selectSectionTemplate'
+      'updateElementData'
     ]),
+
+    // Method to insert an element at a specific position
+    insertElement(element, index) {
+      this.$store.dispatch('pageBuilder/insertElementAtIndex', {
+        element,
+        index
+      });
+      
+      // Reset active insertion index
+      this.activeInsertionIndex = null;
+    },
+    
+    // Method to insert a section template
+    insertSectionTemplate(template) {
+      const insertIndex = this.activeInsertionIndex !== null ? 
+                          this.activeInsertionIndex : 
+                          this.canvasElements.length;
+                          
+      this.$store.dispatch('pageBuilder/insertSectionTemplateAtIndex', {
+        template,
+        index: insertIndex
+      });
+      
+      // Reset insertion index and hide the sidebar
+      this.activeInsertionIndex = null;
+      this.toggleSecondarySidebar(false);
+    },
 
     // New insertion point management
     setHoveredInsertionIndex(index) {
@@ -339,23 +356,6 @@ export default {
       setTimeout(() => {
         this.sidebarHighlighted = false;
       }, 600); // Animation duration
-    },
-    
-    // Add element at specific index
-    addElementToCanvas(element, insertIndex = null) {
-      // If we have an insertion index, use it
-      if (insertIndex !== null) {
-        this.$store.dispatch('pageBuilder/insertElementAtIndex', {
-          element,
-          index: insertIndex
-        });
-      } else {
-        // Otherwise add to the end
-        this.$store.dispatch('pageBuilder/addElementToCanvas', element);
-      }
-      
-      // Reset insertion index
-      this.activeInsertionIndex = null;
     },
 
     // Toggle secondary sidebar method
@@ -436,21 +436,6 @@ export default {
       }
     },
     
-    addSectionTemplate(template, insertIndex = null) {
-      // If we have an insertion index, use it
-      if (insertIndex !== null) {
-        this.$store.dispatch('pageBuilder/insertSectionTemplateAtIndex', {
-          template,
-          index: insertIndex
-        });
-      } else {
-        this.selectSectionTemplate(template);
-      }
-      
-      // Reset insertion index
-      this.activeInsertionIndex = null;
-    },
-    
     // Helper method for Element Settings panel
     isTextElement() {
       if (this.selectedElementIndex === null) return false;
@@ -477,172 +462,150 @@ export default {
       
     // Improved drag and drop methods
     startDrag(event, index) {
-      // Prevent default to avoid text selection
       event.preventDefault();
       
-      // Set dragging state
+      // Set state
       this.isDragging = true;
       this.draggedElementIndex = index;
       
-      // Initialize the drag positions
-      this.dragStartPosition = { x: event.clientX, y: event.clientY };
-      this.dragGhostPosition = { x: event.clientX + 15, y: event.clientY - 15 };
+      // Initial positions for the drag ghost
+      this.dragGhostPosition = { 
+        x: event.clientX + 15, 
+        y: event.clientY - 15 
+      };
       
       // Add global event listeners
       window.addEventListener('mousemove', this.handleDragMove);
       window.addEventListener('mouseup', this.handleDragEnd);
       
-      // Add a class to document body to indicate dragging state
+      // Add dragging class to body
       document.body.classList.add('is-dragging');
     },
     
+    // Handle mouse movement during drag
     handleDragMove(event) {
       if (!this.isDragging) return;
       
-      // Update ghost position
+      // Update ghost position to follow cursor
       this.dragGhostPosition = {
         x: event.clientX + 15,
         y: event.clientY - 15
       };
       
-      // Find the dropzone under the cursor by calculating positions
+      // Find dropzone under the cursor
       this.findDropzoneAtPosition(event.clientX, event.clientY);
     },
     
+    // Find which dropzone is under the cursor
     findDropzoneAtPosition(x, y) {
-      // Get all dropzone elements (including the top one and those between elements)
       const dropzones = document.querySelectorAll('.insertion-zone');
+      if (!dropzones.length) return;
       
-      // If no dropzones are found, exit early
-      if (dropzones.length === 0) {
-        return;
-      }
+      let bestDropzone = null;
+      let bestDistance = Infinity;
       
-      // Convert to array for easier processing
-      const dropzonesArray = Array.from(dropzones);
-      
-      // Find the closest dropzone by vertical distance
-      let closestDropzone = null;
-      let closestDistance = Infinity;
-      
-      for (let i = 0; i < dropzonesArray.length; i++) {
-        const dropzone = dropzonesArray[i];
+      // Find the closest dropzone
+      dropzones.forEach(dropzone => {
         const rect = dropzone.getBoundingClientRect();
+        const centerY = rect.top + rect.height / 2;
+        const distance = Math.abs(y - centerY);
         
-        // Calculate the center Y of the dropzone
-        const dropzoneY = rect.top + (rect.height / 2);
-        
-        // Calculate vertical distance from cursor to dropzone center
-        const distance = Math.abs(y - dropzoneY);
-        
-        // If this is closer than our current closest, update
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestDropzone = dropzone;
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestDropzone = dropzone;
         }
-      }
+      });
       
-      // If we found a close dropzone within a reasonable distance
-      if (closestDropzone && closestDistance < 50) {
-        // Get the index from the dropzone
-        let index = 0; // Default to top position
+      // Only use dropzone if it's close enough
+      if (bestDropzone && bestDistance < 40) {
+        // Get the index of this dropzone
+        const newIndex = parseInt(bestDropzone.dataset.index, 10);
         
-        if (closestDropzone.dataset.dropzoneIndex !== undefined) {
-          // This is a dropzone after an element
-          index = parseInt(closestDropzone.dataset.dropzoneIndex, 10);
+        // Only update if it's a different zone
+        if (this.hoveredInsertionIndex !== newIndex) {
+          this.hoveredInsertionIndex = newIndex;
         }
-        
-        // Set the dropzone index - this is the index where the element will be inserted
-        this.setDropzoneIndex(index);
-        
-        // Also update hovered index for visual feedback
-        // The hoveredInsertionIndex corresponds to insertion points (between elements)
-        // Dropzone 0 means insert after element 0, but hoveredInsertionIndex 0 means insert at the top
-        const hoveredIndex = index === -1 ? 0 : index + 1;
-        this.hoveredInsertionIndex = hoveredIndex;
       } else {
-        // If no reasonable dropzone found, reset
-        this.dropzoneIndex = null;
         this.hoveredInsertionIndex = null;
       }
     },
     
-    setDropzoneIndex(index) {
-      if (this.dropzoneIndex !== index) {
-        this.dropzoneIndex = index;
-      }
-    },
-    
+    // Handle end of drag operation
     handleDragEnd() {
       if (!this.isDragging) return;
       
-      try {
-        // Move the element if a valid dropzone was targeted
-        if (this.dropzoneIndex !== null) {
-          this.moveElement(this.draggedElementIndex, this.dropzoneIndex);
-        }
-      } finally {
-        // Always clean up regardless of success/failure
-        this.cleanupDragState();
+      // If we have a valid target position and it's different from the source
+      if (this.hoveredInsertionIndex !== null && 
+          this.hoveredInsertionIndex !== this.draggedElementIndex && 
+          this.hoveredInsertionIndex !== this.draggedElementIndex + 1) {
+        
+        // Execute the move
+        this.moveElement(this.draggedElementIndex, this.hoveredInsertionIndex);
       }
+      
+      // Always clean up
+      this.cleanupDragState();
     },
     
+    // Clean up after drag operation
     cleanupDragState() {
-      // Clean up dragging state
       this.isDragging = false;
-      document.body.classList.remove('is-dragging');
+      this.draggedElementIndex = null;
+      this.hoveredInsertionIndex = null;
       
-      // Remove global event listeners
+      // Remove global listeners
       window.removeEventListener('mousemove', this.handleDragMove);
       window.removeEventListener('mouseup', this.handleDragEnd);
       
-      // Reset drag-related state
-      this.draggedElementIndex = null;
-      this.dropzoneIndex = null;
-      this.hoveredInsertionIndex = null;
+      // Remove body class
+      document.body.classList.remove('is-dragging');
     },
     
+    // Move an element from one position to another
     moveElement(fromIndex, toIndex) {
-      // Validate indices
-      if (fromIndex < 0 || fromIndex >= this.canvasElements.length) {
-        return;
-      }
+      // Get the element being moved
+      const elementToMove = {...this.canvasElements[fromIndex]};
       
-      // If trying to drop at the same position, do nothing
-      if (fromIndex === toIndex) {
-        return;
-      }
-      
-      // Create a new array with the elements in the new order
+      // Create a new array for the updated order
       const newElements = [...this.canvasElements];
-      const elementToMove = {...newElements[fromIndex]};
       
       // Remove the element from its original position
       newElements.splice(fromIndex, 1);
       
-      // Insert it at the new position - if toIndex is after fromIndex, 
-      // we need to adjust because the removal shifted everything up
-      const adjustedToIndex = toIndex > fromIndex ? toIndex - 1 : toIndex;
+      // Calculate the corrected insertion index
+      // If moving down the list, account for the removed element
+      let correctedToIndex = toIndex;
+      if (toIndex > fromIndex) {
+        correctedToIndex = toIndex - 1;
+      }
       
-      // Insert at the adjusted position
-      newElements.splice(adjustedToIndex, 0, elementToMove);
+      // Insert at the new position
+      newElements.splice(correctedToIndex, 0, elementToMove);
       
-      // Update the store with the entire new array
+      // Update the store
       this.$store.commit('pageBuilder/SET_CANVAS_ELEMENTS', newElements);
       
       // Update selection if needed
       if (this.selectedElementIndex === fromIndex) {
-        this.selectElement(adjustedToIndex);
-      } else if (this.selectedElementIndex > fromIndex && this.selectedElementIndex <= adjustedToIndex) {
+        this.selectElement(correctedToIndex);
+      } else if (
+        this.selectedElementIndex > fromIndex && 
+        this.selectedElementIndex <= correctedToIndex
+      ) {
         this.selectElement(this.selectedElementIndex - 1);
-      } else if (this.selectedElementIndex < fromIndex && this.selectedElementIndex >= adjustedToIndex) {
+      } else if (
+        this.selectedElementIndex < fromIndex && 
+        this.selectedElementIndex >= correctedToIndex
+      ) {
         this.selectElement(this.selectedElementIndex + 1);
       }
     }
   },
   beforeDestroy() {
     // Ensure all event listeners are removed when component is destroyed
-    this.cleanupDragState();
+    if (this.isDragging) {
+      this.cleanupDragState();
+    }
     
     // Clear any remaining hover timeouts
     if (this.hoverTimeout) {
@@ -668,17 +631,15 @@ export default {
   overflow: visible;
 }
 
-/* Enhanced insertion zone styles */
+/* Simplified insertion zone styles */
 .insertion-zone {
-  height: 28px;
-  transition: all 0.2s ease;
+  height: 20px;
+  transition: all 0.15s ease;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  margin: 4px 0;
-  padding: 0;
+  margin: 2px 0;
   width: 100%;
 }
 
@@ -686,28 +647,27 @@ export default {
   width: 90%;
   height: 2px;
   background-color: #d1d5db; /* gray-300 */
-  transition: all 0.2s ease;
-  border-radius: 1px;
+  transition: all 0.15s ease;
   opacity: 0;
 }
 
-/* Only show the line for the specific insertion zone being hovered */
+/* Show the line when hovering over the insertion zone */
 .insertion-zone:hover .insertion-line {
   opacity: 1;
-  height: 2px;
-  background-color: #9ca3af; /* gray-400 */
 }
 
+/* Active state when it's the current drop target */
 .insertion-zone.active .insertion-line {
   opacity: 1;
   height: 3px;
   background-color: #3b82f6; /* blue-500 */
 }
 
+/* The plus button */
 .insertion-button {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   background-color: white;
   border: 1px solid #d1d5db; /* gray-300 */
   border-radius: 50%;
@@ -715,25 +675,27 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   z-index: 10;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   opacity: 0;
   top: 50%;
-  transform: translateY(-50%); /* Center vertically */
+  transform: translateY(-50%);
 }
 
+/* Show button on hover */
 .insertion-zone:hover .insertion-button {
   opacity: 1;
 }
 
+/* Button hover effect */
 .insertion-button:hover {
-  transform: translateY(-50%) scale(1.2); /* Keep vertical centering while scaling */
+  transform: translateY(-50%) scale(1.2);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-color: #3b82f6; /* blue-500 */
 }
 
-/* When the insertion point is active */
+/* Active state styling */
 .insertion-zone.active .insertion-button {
   opacity: 1;
   background-color: #3b82f6; /* blue-500 */
@@ -743,15 +705,26 @@ export default {
   color: white;
 }
 
-/* When dragging - only show the active dropzone */
-.is-dragging .insertion-zone .insertion-line {
-  opacity: 0; 
+/* When an element is being dragged */
+.element-wrapper.dragging {
+  opacity: 0.5;
 }
 
-.is-dragging .insertion-zone.active .insertion-line {
-  opacity: 1;
-  height: 3px;
-  background-color: #3b82f6; /* blue-500 */
+/* Style for the drag ghost element */
+.drag-ghost {
+  pointer-events: none;
+  position: fixed;
+  z-index: 9999;
+  background: white;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  padding: 6px 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Sidebar highlight animation */
@@ -776,25 +749,6 @@ export default {
 
 .sidebar-highlight {
   animation: highlight-sidebar 0.6s ease;
-}
-
-/* Subtle animation for the drag ghost */
-@keyframes pulse {
-  0%, 100% { opacity: 0.75; }
-  50% { opacity: 0.6; }
-}
-
-.fixed.pointer-events-none {
-  animation: pulse 1.5s infinite;
-}
-
-/* Improve cursor appearance */
-:deep(.cursor-move) {
-  cursor: grab;
-}
-
-:deep(.cursor-move:active) {
-  cursor: grabbing;
 }
 
 /* Section item hover effect */
