@@ -60,7 +60,7 @@
           :visible="showSecondarySidebar"
           :section-type="activeSectionType"
           :templates="activeSectionTemplates"
-          @close="hideSecondarySidebar"
+          @close="toggleSecondarySidebar(false)"
           @select-template="addSectionTemplate"
         />
       </div>
@@ -269,15 +269,13 @@ export default {
       'selectSectionTemplate'
     ]),
 
-    // Direct implementation of sidebar methods
-    showSecondarySidebar(sectionType) {
-      console.log('Directly calling showSecondarySidebar with:', sectionType);
-      this.$store.dispatch('pageBuilder/showSecondarySidebar', sectionType);
-    },
-    
-    hideSecondarySidebar() {
-      console.log('Directly calling hideSecondarySidebar');
-      this.$store.dispatch('pageBuilder/hideSecondarySidebar');
+    // Toggle secondary sidebar method
+    toggleSecondarySidebar(show, sectionType = null) {
+      if (show) {
+        this.$store.dispatch('pageBuilder/showSecondarySidebar', sectionType);
+      } else {
+        this.$store.dispatch('pageBuilder/hideSecondarySidebar');
+      }
     },
     
     handleSectionLeave() {
@@ -300,7 +298,7 @@ export default {
       this.hoverTimeout = setTimeout(() => {
         if (sectionType === 'testimonials') {
           console.log('Testimonials hover triggered - showing sidebar');
-          this.showSecondarySidebar(sectionType);
+          this.toggleSecondarySidebar(true, sectionType);
         }
       }, this.hoverDelay);
     },
@@ -309,7 +307,7 @@ export default {
       console.log('Section selected:', section.type);
       // If we have templates for this section type, show them
       if (section.type === 'testimonials') {
-        this.showSecondarySidebar(section.type);
+        this.toggleSecondarySidebar(true, section.type);
       } else {
         console.log(`Selected section: ${section.name}`);
       }
