@@ -114,6 +114,7 @@
                 class="dropzone w-full my-1 border-2 border-transparent transition-colors"
                 :class="{'border-blue-500': dropzoneIndex === index}"
                 @dragover.prevent="setDropzoneIndex(index)"
+                :data-dropzone-index="index"
               ></div>
             </div>
             
@@ -367,34 +368,58 @@ export default {
     },
     
     findDropzoneAtPosition(x, y) {
-      // Get all dropzone elements
+      // Get all dropzone elements (including the top one and those between elements)
       const dropzones = document.querySelectorAll('.dropzone');
+      
+      // If no dropzones are found, exit early
+      if (dropzones.length === 0) {
+        console.log('No dropzones found');
+        return;
+      }
       
       // Convert to array for easier processing
       const dropzonesArray = Array.from(dropzones);
       
-      // Find which dropzone contains the position
+      // Alternative approach: find the closest dropzone by vertical distance
+      let closestDropzone = null;
+      let closestDistance = Infinity;
+      
       for (let i = 0; i < dropzonesArray.length; i++) {
         const dropzone = dropzonesArray[i];
         const rect = dropzone.getBoundingClientRect();
         
-        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-          // Get the index from the dropzone (might be -1 for top position)
-          let index = -1;
-          if (dropzone.dataset.dropzoneIndex !== undefined) {
-            index = parseInt(dropzone.dataset.dropzoneIndex, 10);
-          }
-          this.setDropzoneIndex(index);
-          return;
+        // Calculate the center Y of the dropzone
+        const dropzoneY = rect.top + (rect.height / 2);
+        
+        // Calculate vertical distance from cursor to dropzone center
+        const distance = Math.abs(y - dropzoneY);
+        
+        // If this is closer than our current closest, update
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestDropzone = dropzone;
         }
       }
       
-      // If no dropzone found, reset
-      this.dropzoneIndex = null;
+      // If we found a close dropzone within a reasonable distance
+      if (closestDropzone && closestDistance < 50) {
+        // Get the index from the dropzone
+        let index = -1;
+        if (closestDropzone.dataset.dropzoneIndex !== undefined) {
+          index = parseInt(closestDropzone.dataset.dropzoneIndex, 10);
+        }
+        this.setDropzoneIndex(index);
+      } else {
+        // If no reasonable dropzone found, reset
+        this.dropzoneIndex = null;
+      }
     },
     
     setDropzoneIndex(index) {
-      this.dropzoneIndex = index;
+      if (this.dropzoneIndex !== index) {
+        console.log('Setting dropzone index to:', index);
+        this.dropzoneIndex = index;
+      }
     },
     
     handleDragEnd() {
@@ -509,6 +534,14 @@ export default {
 
 /* When dragging, ensure all the dropzones are clearly visible */
 .is-dragging .dropzone {
-  min-height: 10px;
+  min-height: 20px;
+  margin: 8px 0;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Make dropzones more obvious when hovered */
+.is-dragging .dropzone:hover, .is-dragging .dropzone.border-blue-500 {
+  background-color: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.6);
 }
 </style>
