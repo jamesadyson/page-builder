@@ -1,8 +1,8 @@
-// src/components/PageBuilder.vue
+<!-- src/components/PageBuilder.vue -->
 <template>
   <div class="page-builder flex h-screen">
     <!-- Left Sidebar for Sections -->
-    <div class="w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto">
+    <div class="w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto relative">
       <div class="p-4">
         <h2 class="text-lg font-medium text-gray-800">{{ sidebarTitle }}</h2>
       </div>
@@ -39,15 +39,31 @@
         <div
           v-for="(section, index) in sections"
           :key="index"
-          class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center"
+          class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center section-item relative"
+          @mouseenter="handleSectionHover(section.type)"
+          @mouseleave="handleSectionLeave"
           @click="selectSection(section)"
         >
           <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
             <component :is="section.icon" class="w-5 h-5" />
           </div>
           <span>{{ section.name }}</span>
+          <div class="absolute right-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
         </div>
       </div>
+      
+      <!-- Secondary Sidebar for Section Templates -->
+      <SecondarySidebar
+        :visible="showSecondarySidebar"
+        :section-type="activeSectionType"
+        :templates="activeSectionTemplates"
+        @close="hideSecondarySidebar"
+        @select-template="addSectionTemplate"
+      />
     </div>
 
     <!-- Main Canvas Area -->
@@ -102,6 +118,7 @@
               <component
                 :is="element.component"
                 :element-data="element.data"
+                :section-data="element.data"
                 @select="selectElementFromCanvas(index)"
                 @delete="removeElement(index)"
                 @dragstart="startDrag($event, index)"
@@ -145,7 +162,7 @@
             <svg class="h-4 w-4 mr-1 text-pink-500" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2L1 21h22L12 2z" />
             </svg>
-            We use Perspective
+            Page Builder
           </span>
         </div>
       </div>
@@ -186,6 +203,9 @@ import TextElement from '@/components/elements/TextElement.vue';
 import BulletElement from '@/components/elements/BulletElement.vue';
 import FeatureElement from '@/components/elements/FeatureElement.vue';
 import TextFormatControls from '@/components/TextFormatControls.vue';
+import TestimonialSection from '@/components/sections/TestimonialSection.vue';
+import SecondarySidebar from '@/components/SecondarySidebar.vue';
+import { mapState, mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'PageBuilder',
@@ -194,127 +214,64 @@ export default {
     TextElement,
     BulletElement,
     FeatureElement,
-    TextFormatControls
+    TextFormatControls,
+    TestimonialSection,
+    SecondarySidebar
   },
   data() {
     return {
-      showElementSelector: false,
       sidebarTitle: 'Add section',
-      selectedElementIndex: null,
-      canvasElements: [],
       // Drag and drop state
       isDragging: false,
       draggedElementIndex: null,
       dropzoneIndex: null,
       dragStartPosition: { x: 0, y: 0 },
       dragGhostPosition: { x: 0, y: 0 },
-      sections: [
-        { name: 'Hero', icon: 'HeroIcon' },
-        { name: 'Product', icon: 'ProductIcon' },
-        { name: 'Call to action', icon: 'CtaIcon' },
-        { name: 'About us', icon: 'AboutIcon' },
-        { name: 'Quiz', icon: 'QuizIcon' },
-        { name: 'Team', icon: 'TeamIcon' },
-        { name: 'Testimonials', icon: 'TestimonialsIcon' },
-        { name: 'Trust', icon: 'TrustIcon' }
-      ],
-      basicElements: [
-        { 
-          name: 'Heading', 
-          icon: 'HeadingIcon',
-          component: 'HeadingElement',
-          data: { 
-            text: 'Your Heading', 
-            level: 1,
-            fontSize: 'text-2xl',
-            isBold: true,
-            isItalic: false,
-            isUnderline: false,
-            textAlign: 'left',
-            textColor: '#000000'
-          } 
-        },
-        { 
-          name: 'Text Block', 
-          icon: 'TextIcon',
-          component: 'TextElement',
-          data: { 
-            text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.',
-            fontSize: 'text-base',
-            isBold: false,
-            isItalic: false,
-            isUnderline: false,
-            textAlign: 'left',
-            textColor: '#000000'
-          } 
-        },
-        { 
-          name: 'Bullet List', 
-          icon: 'BulletIcon',
-          component: 'BulletElement',
-          data: { 
-            items: ['Item 1', 'Item 2', 'Item 3'],
-            fontSize: 'text-base',
-            isBold: false,
-            isItalic: false,
-            isUnderline: false,
-            textAlign: 'left',
-            textColor: '#000000'
-          } 
-        }
-      ],
-      interactiveElements: [
-        { 
-          name: 'Feature Block', 
-          icon: 'FeatureIcon',
-          component: 'FeatureElement',
-          data: { 
-            title: 'Feature Title', 
-            description: 'Feature description goes here',
-            imageUrl: '/placeholder.jpg',
-            fontSize: 'text-base',
-            isBold: false,
-            isItalic: false,
-            isUnderline: false,
-            textAlign: 'left',
-            textColor: '#000000'
-          } 
-        }
-      ]
+      // Hover timeouts for section selection
+      hoverTimeout: null,
+      hoverDelay: 300 // ms
     };
   },
+  computed: {
+    ...mapState('pageBuilder', [
+      'canvasElements',
+      'selectedElementIndex',
+      'showElementSelector',
+      'activeSectionType',
+      'showSecondarySidebar'
+    ]),
+    ...mapGetters('pageBuilder', [
+      'getAvailableElements',
+      'getAvailableSections',
+      'getActiveSectionTemplates'
+    ]),
+    basicElements() {
+      return this.getAvailableElements.basic || [];
+    },
+    interactiveElements() {
+      return this.getAvailableElements.interactive || [];
+    },
+    sections() {
+      return this.getAvailableSections || [];
+    },
+    activeSectionTemplates() {
+      return this.getActiveSectionTemplates || [];
+    }
+  },
   methods: {
-    openElementSelector() {
-      this.showElementSelector = true;
-      this.sidebarTitle = 'Add elements';
-    },
-    selectSection(section) {
-      // Logic to select a section
-      console.log('Selected section:', section);
-    },
-    addElementToCanvas(element) {
-      this.canvasElements.push({
-        component: element.component,
-        data: JSON.parse(JSON.stringify(element.data)) // Create a deep copy
-      });
-      this.showElementSelector = false;
-      this.sidebarTitle = 'Add section';
-    },
+    ...mapActions('pageBuilder', [
+      'openElementSelector',
+      'closeElementSelector',
+      'addElementToCanvas',
+      'removeElement',
+      'selectElement',
+      'updateElementData',
+      'showSecondarySecondarySidebar',
+      'hideSecondarySecondarySidebar',
+      'selectSectionTemplate'
+    ]),
     selectElementFromCanvas(index) {
-      this.selectedElementIndex = index;
-    },
-    removeElement(index) {
-      this.canvasElements.splice(index, 1);
-      if (this.selectedElementIndex === index) {
-        this.selectedElementIndex = null;
-      } else if (this.selectedElementIndex > index) {
-        this.selectedElementIndex--;
-      }
-    },
-    updateElementData(updatedData) {
-      if (this.selectedElementIndex !== null) {
-        this.canvasElements[this.selectedElementIndex].data = updatedData;
-      }
+      this.selectElement(index);
     },
     isTextElement() {
       if (this.selectedElementIndex === null) return false;
@@ -327,9 +284,50 @@ export default {
         'HeadingElement': 'Heading',
         'TextElement': 'Text Block',
         'BulletElement': 'Bullet List',
-        'FeatureElement': 'Feature Block'
+        'FeatureElement': 'Feature Block',
+        'TestimonialSection': 'Testimonial'
       };
       return elementMap[componentName] || 'Element';
+    },
+    
+    // Handle section selection and hover events
+    handleSectionHover(sectionType) {
+      // Clear any existing timeout
+      if (this.hoverTimeout) {
+        clearTimeout(this.hoverTimeout);
+      }
+      
+      // Set a new timeout to show the secondary sidebar
+      this.hoverTimeout = setTimeout(() => {
+        if (sectionType === 'testimonials') {
+          this.showSecondarySecondarySidebar(sectionType);
+        }
+      }, this.hoverDelay);
+    },
+    
+    handleSectionLeave() {
+      // Clear the timeout if the mouse leaves before it triggers
+      if (this.hoverTimeout) {
+        clearTimeout(this.hoverTimeout);
+        this.hoverTimeout = null;
+      }
+    },
+    
+    selectSection(section) {
+      // If we have templates for this section type, show them
+      if (section.type === 'testimonials' && this.$store.state.pageBuilder.sectionTemplates.testimonials) {
+        this.showSecondarySecondarySidebar(section.type);
+      } else {
+        console.log(`Selected section: ${section.name}`);
+      }
+    },
+    
+    hideSecondarySidebar() {
+      this.hideSecondarySecondarySidebar();
+    },
+    
+    addSectionTemplate(template) {
+      this.selectSectionTemplate(template);
     },
     
     // Improved drag and drop methods
@@ -363,7 +361,6 @@ export default {
       };
       
       // Find the dropzone under the cursor by calculating positions
-      // This is a more reliable approach than relying on mouseenter events
       this.findDropzoneAtPosition(event.clientX, event.clientY);
     },
     
@@ -373,14 +370,13 @@ export default {
       
       // If no dropzones are found, exit early
       if (dropzones.length === 0) {
-        console.log('No dropzones found');
         return;
       }
       
       // Convert to array for easier processing
       const dropzonesArray = Array.from(dropzones);
       
-      // Alternative approach: find the closest dropzone by vertical distance
+      // Find the closest dropzone by vertical distance
       let closestDropzone = null;
       let closestDistance = Infinity;
       
@@ -417,7 +413,6 @@ export default {
     
     setDropzoneIndex(index) {
       if (this.dropzoneIndex !== index) {
-        console.log('Setting dropzone index to:', index);
         this.dropzoneIndex = index;
       }
     },
@@ -468,29 +463,43 @@ export default {
       toIndex = Math.max(0, Math.min(this.canvasElements.length, toIndex));
       
       // Get the element to move
-      const elementToMove = { ...this.canvasElements[fromIndex] };
+      const elementToMove = JSON.parse(JSON.stringify(this.canvasElements[fromIndex]));
       
       // Create a new array with the element moved
       const newElements = [...this.canvasElements];
       newElements.splice(fromIndex, 1);
       newElements.splice(toIndex, 0, elementToMove);
       
-      // Update the canvas elements
-      this.canvasElements = newElements;
+      // Update the state using the removeElement and addElementToCanvas actions
+      // We need to handle the selected element index separately
+      const wasSelected = this.selectedElementIndex === fromIndex;
       
-      // Update selected element index if needed
-      if (this.selectedElementIndex === fromIndex) {
-        this.selectedElementIndex = toIndex;
-      } else if (this.selectedElementIndex > fromIndex && this.selectedElementIndex <= toIndex) {
-        this.selectedElementIndex--;
-      } else if (this.selectedElementIndex < fromIndex && this.selectedElementIndex >= toIndex) {
-        this.selectedElementIndex++;
+      this.removeElement(fromIndex);
+      
+      // Insert at the correct index
+      this.$store.commit('pageBuilder/ADD_CANVAS_ELEMENT', elementToMove);
+      
+      // Now move to the correct position if needed
+      if (toIndex !== newElements.length - 1) {
+        for (let i = newElements.length - 1; i > toIndex; i--) {
+          this.moveElement(i, i - 1);
+        }
+      }
+      
+      // Restore selection if needed
+      if (wasSelected) {
+        this.selectElement(toIndex);
       }
     }
   },
   beforeDestroy() {
     // Ensure all event listeners are removed when component is destroyed
     this.cleanupDragState();
+    
+    // Clear any remaining hover timeouts
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
   }
 };
 </script>
@@ -545,5 +554,15 @@ export default {
   height: 4px;
   background-color: #3b82f6;
   margin: 2px 0;
+}
+
+/* Section item hover effect */
+.section-item {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.section-item:hover {
+  background-color: rgba(59, 130, 246, 0.1);
 }
 </style>

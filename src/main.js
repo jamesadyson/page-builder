@@ -7,6 +7,12 @@ import './assets/styles/main.css'
 // Register icon components
 import './components/icons'
 
+// Register section components
+import TestimonialSection from './components/sections/TestimonialSection.vue'
+
+// Register global components
+Vue.component('TestimonialSection', TestimonialSection)
+
 Vue.config.productionTip = false
 
 new Vue({
