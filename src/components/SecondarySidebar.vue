@@ -54,7 +54,7 @@
 
 <script>
 export default {
-  name: 'SecondarySecondarySidebar',
+  name: 'SecondarySidebar',
   props: {
     visible: {
       type: Boolean,
@@ -91,5 +91,20 @@ export default {
   top: 0;
   height: 100%;
   z-index: 10;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: width 0.3s ease, opacity 0.3s ease;
+  opacity: 1;
+}
+
+.secondary-sidebar.w-0 {
+  opacity: 0;
+  pointer-events: none; /* Prevent interaction when hidden */
+}
+
+/* Ensure the secondary sidebar has proper overflow handling */
+.secondary-sidebar > div {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
 }
 </style>

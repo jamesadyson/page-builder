@@ -106,16 +106,18 @@ export default {
         });
       }
     },
-    showSecondarySecondarySidebar({ commit }, sectionType) {
+    showSecondarySidebar({ commit }, sectionType) {
+      console.log('Action: showSecondarySidebar', sectionType);
       commit('SET_ACTIVE_SECTION_TYPE', sectionType);
       commit('SET_SHOW_SECONDARY_SIDEBAR', true);
     },
-    hideSecondarySecondarySidebar({ commit }) {
+    hideSecondarySidebar({ commit }) {
+      console.log('Action: hideSecondarySidebar');
       commit('SET_SHOW_SECONDARY_SIDEBAR', false);
     },
     selectSectionTemplate({ commit, dispatch }, template) {
       commit('ADD_CANVAS_ELEMENT', template);
-      dispatch('hideSecondarySecondarySidebar');
+      dispatch('hideSecondarySidebar');
     }
   },
   getters: {
@@ -129,7 +131,7 @@ export default {
     getAvailableElements: state => state.availableElements,
     getAvailableSections: state => state.availableSections,
     isElementSelectorVisible: state => state.showElementSelector,
-    isSecondarySecondarySidebarVisible: state => state.showSecondarySidebar,
+    isSecondarySidebarVisible: state => state.showSecondarySidebar,
     getActiveSectionType: state => state.activeSectionType,
     getActiveSectionTemplates: state => {
       if (!state.activeSectionType || !state.sectionTemplates[state.activeSectionType]) {

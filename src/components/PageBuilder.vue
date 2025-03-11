@@ -266,8 +266,8 @@ export default {
       'removeElement',
       'selectElement',
       'updateElementData',
-      'showSecondarySecondarySidebar',
-      'hideSecondarySecondarySidebar',
+      'showSecondarySidebar',
+      'hideSecondarySidebar',
       'selectSectionTemplate'
     ]),
     selectElementFromCanvas(index) {
@@ -299,8 +299,13 @@ export default {
       
       // Set a new timeout to show the secondary sidebar
       this.hoverTimeout = setTimeout(() => {
-        if (sectionType === 'testimonials') {
-          this.showSecondarySecondarySidebar(sectionType);
+        // Check if we have templates for this section type before showing
+        if (sectionType === 'testimonials' && 
+            this.$store.state.pageBuilder.sectionTemplates.testimonials && 
+            this.$store.state.pageBuilder.sectionTemplates.testimonials.length > 0) {
+          
+          console.log('Showing sidebar for testimonials');
+          this.showSecondarySidebar(sectionType);
         }
       }, this.hoverDelay);
     },
@@ -316,14 +321,14 @@ export default {
     selectSection(section) {
       // If we have templates for this section type, show them
       if (section.type === 'testimonials' && this.$store.state.pageBuilder.sectionTemplates.testimonials) {
-        this.showSecondarySecondarySidebar(section.type);
+        this.showSecondarySidebar(section.type);
       } else {
         console.log(`Selected section: ${section.name}`);
       }
     },
     
     hideSecondarySidebar() {
-      this.hideSecondarySecondarySidebar();
+      this.hideSecondarySidebar();
     },
     
     addSectionTemplate(template) {
