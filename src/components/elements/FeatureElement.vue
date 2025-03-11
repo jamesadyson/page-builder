@@ -29,7 +29,7 @@
       <div class="md:w-2/3">
         <h3 
           contenteditable="true" 
-          @input="updateTitle"
+          @blur="updateTitle"
           :class="[
             'text-xl font-semibold mb-2 focus:outline-none focus:ring-2 focus:ring-blue-200 px-2 py-1 rounded',
             elementData.fontSize || 'text-xl',
@@ -42,7 +42,7 @@
         </h3>
         <p 
           contenteditable="true" 
-          @input="updateDescription"
+          @blur="updateDescription"
           :class="[
             'focus:outline-none focus:ring-2 focus:ring-blue-200 px-2 py-1 rounded',
             elementData.fontSize || 'text-base',

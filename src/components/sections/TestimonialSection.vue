@@ -20,13 +20,13 @@
         <p 
           class="mb-4 text-lg text-gray-900 font-medium text-center"
           contenteditable="true"
-          @input="updateSubheading">
+          @blur="updateSubheading">
           {{ sectionData.subheading }}
         </p>
         <h2 
           class="mb-24 text-4xl md:text-5xl font-bold text-center tracking-tight leading-tight"
           contenteditable="true"
-          @input="updateHeading">
+          @blur="updateHeading">
           {{ sectionData.heading }}
         </h2>
         <div class="flex flex-wrap -m-8">
@@ -44,13 +44,13 @@
                   <h3 
                     class="font-semibold"
                     contenteditable="true"
-                    @input="updateTestimonial(0, 'author')">
+                    @blur="updateTestimonial(0, 'author')">
                     {{ sectionData.testimonials[0].author }}
                   </h3>
                   <p 
                     class="text-gray-500"
                     contenteditable="true"
-                    @input="updateTestimonial(0, 'handle')">
+                    @blur="updateTestimonial(0, 'handle')">
                     {{ sectionData.testimonials[0].handle }}
                   </p>
                 </div>
@@ -58,7 +58,7 @@
               <p 
                 class="mb-8 text-xl font-medium text-center"
                 contenteditable="true"
-                @input="updateTestimonial(0, 'quote')">
+                @blur="updateTestimonial(0, 'quote')">
                 {{ sectionData.testimonials[0].quote }}
               </p>
               <div class="h-8 flex items-center justify-center">

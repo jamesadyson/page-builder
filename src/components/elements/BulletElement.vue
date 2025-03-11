@@ -25,7 +25,7 @@
         v-for="(item, index) in elementData.items" 
         :key="index" 
         contenteditable="true"
-        @input="updateItem(index, $event)"
+        @blur="updateItem(index, $event)"
         :class="[
           'mb-2 focus:outline-none focus:ring-2 focus:ring-blue-200 px-2 py-1 rounded',
           elementData.fontSize || 'text-base',

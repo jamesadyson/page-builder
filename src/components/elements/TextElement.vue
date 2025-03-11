@@ -15,7 +15,7 @@
     </div>
     <p 
       contenteditable="true" 
-      @input="updateContent"
+      @blur="updateContent"
       :class="[
         'focus:outline-none focus:ring-2 focus:ring-blue-200 px-2 py-1 rounded',
         elementData.fontSize || 'text-base',
