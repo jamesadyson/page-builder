@@ -88,6 +88,7 @@
               :key="index"
               :is="element.component"
               :element-data="element.data"
+              @select="selectElementFromCanvas(index)"
               @delete="removeElement(index)"
             />
             
@@ -125,12 +126,17 @@
     </div>
 
     <!-- Right Sidebar for Options -->
-    <div v-if="selectedElement" class="w-64 bg-white border-l border-gray-200 shadow-sm overflow-y-auto">
-      <div class="p-4">
+    <div v-if="selectedElementIndex !== null" class="w-64 bg-white border-l border-gray-200 shadow-sm overflow-y-auto">
+      <div class="p-4 border-b border-gray-200">
         <h2 class="text-lg font-medium text-gray-800">Element Settings</h2>
       </div>
       <div class="p-4">
-        <!-- Element specific settings will be rendered here -->
+        <!-- Element specific settings -->
+        <TextFormatControls 
+          v-if="isTextElement()"
+          :element-data="canvasElements[selectedElementIndex].data"
+          @update="updateElementData"
+        />
       </div>
     </div>
   </div>
@@ -138,10 +144,11 @@
 
 <script>
 // Import element components
-import HeadingElement from './elements/HeadingElement.vue';
-import TextElement from './elements/TextElement.vue';
-import BulletElement from './elements/BulletElement.vue';
-import FeatureElement from './elements/FeatureElement.vue';
+import HeadingElement from '@/components/elements/HeadingElement.vue';
+import TextElement from '@/components/elements/TextElement.vue';
+import BulletElement from '@/components/elements/BulletElement.vue';
+import FeatureElement from '@/components/elements/FeatureElement.vue';
+import TextFormatControls from '@/components/TextFormatControls.vue';
 
 export default {
   name: 'PageBuilder',
@@ -149,13 +156,14 @@ export default {
     HeadingElement,
     TextElement,
     BulletElement,
-    FeatureElement
+    FeatureElement,
+    TextFormatControls
   },
   data() {
     return {
       showElementSelector: false,
       sidebarTitle: 'Add section',
-      selectedElement: null,
+      selectedElementIndex: null,
       canvasElements: [],
       sections: [
         { name: 'Hero', icon: 'HeroIcon' },
@@ -172,19 +180,44 @@ export default {
           name: 'Heading', 
           icon: 'HeadingIcon',
           component: 'HeadingElement',
-          data: { text: 'Your Heading', level: 1 } 
+          data: { 
+            text: 'Your Heading', 
+            level: 1,
+            fontSize: null,
+            isBold: false,
+            isItalic: false,
+            isUnderline: false,
+            textAlign: 'left',
+            textColor: '#000000'
+          } 
         },
         { 
           name: 'Text Block', 
           icon: 'TextIcon',
           component: 'TextElement',
-          data: { text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.' } 
+          data: { 
+            text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.',
+            fontSize: 'text-base',
+            isBold: false,
+            isItalic: false,
+            isUnderline: false,
+            textAlign: 'left',
+            textColor: '#000000'
+          } 
         },
         { 
           name: 'Bullet List', 
           icon: 'BulletIcon',
           component: 'BulletElement',
-          data: { items: ['Item 1', 'Item 2', 'Item 3'] } 
+          data: { 
+            items: ['Item 1', 'Item 2', 'Item 3'],
+            fontSize: 'text-base',
+            isBold: false,
+            isItalic: false,
+            isUnderline: false,
+            textAlign: 'left',
+            textColor: '#000000'
+          } 
         }
       ],
       interactiveElements: [
@@ -195,7 +228,13 @@ export default {
           data: { 
             title: 'Feature Title', 
             description: 'Feature description goes here',
-            imageUrl: '/placeholder.jpg'
+            imageUrl: '/placeholder.jpg',
+            fontSize: 'text-base',
+            isBold: false,
+            isItalic: false,
+            isUnderline: false,
+            textAlign: 'left',
+            textColor: '#000000'
           } 
         }
       ]
@@ -218,9 +257,40 @@ export default {
       this.showElementSelector = false;
       this.sidebarTitle = 'Add section';
     },
+    selectElementFromCanvas(index) {
+      this.selectedElementIndex = index;
+    },
     removeElement(index) {
       this.canvasElements.splice(index, 1);
+      if (this.selectedElementIndex === index) {
+        this.selectedElementIndex = null;
+      } else if (this.selectedElementIndex > index) {
+        this.selectedElementIndex--;
+      }
+    },
+    updateElementData(updatedData) {
+      if (this.selectedElementIndex !== null) {
+        this.canvasElements[this.selectedElementIndex].data = updatedData;
+      }
+    },
+    isTextElement() {
+      if (this.selectedElementIndex === null) return false;
+      
+      const componentName = this.canvasElements[this.selectedElementIndex].component;
+      return ['TextElement', 'HeadingElement', 'BulletElement', 'FeatureElement'].includes(componentName);
     }
   }
 };
 </script>
+
+<style scoped>
+/* Optional: Add smooth transitions for a better UX */
+.page-builder .fade-enter-active, 
+.page-builder .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.page-builder .fade-enter, 
+.page-builder .fade-leave-to {
+  opacity: 0;
+}
+</style>

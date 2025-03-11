@@ -7,13 +7,25 @@
         </svg>
       </button>
     </div>
-    <ul class="list-disc pl-5">
+    <ul 
+      :class="[
+        'list-disc pl-5',
+        elementData.textAlign === 'center' ? 'text-center' : '',
+        elementData.textAlign === 'right' ? 'text-right' : ''
+      ]">
       <li 
         v-for="(item, index) in elementData.items" 
         :key="index" 
         contenteditable="true"
         @input="updateItem(index, $event)"
-        class="mb-2 focus:outline-none focus:ring-2 focus:ring-blue-200 px-2 py-1 rounded">
+        :class="[
+          'mb-2 focus:outline-none focus:ring-2 focus:ring-blue-200 px-2 py-1 rounded',
+          elementData.fontSize || 'text-base',
+          elementData.isBold ? 'font-bold' : '',
+          elementData.isItalic ? 'italic' : '',
+          elementData.isUnderline ? 'underline' : ''
+        ]"
+        :style="{ color: elementData.textColor }">
         {{ item }}
       </li>
       <li class="text-blue-500 cursor-pointer" @click="addItem">+ Add item</li>

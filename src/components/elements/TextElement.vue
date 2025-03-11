@@ -10,7 +10,15 @@
     <p 
       contenteditable="true" 
       @input="updateContent"
-      class="focus:outline-none focus:ring-2 focus:ring-blue-200 px-2 py-1 rounded">
+      :class="[
+        'focus:outline-none focus:ring-2 focus:ring-blue-200 px-2 py-1 rounded',
+        elementData.fontSize || 'text-base',
+        elementData.isBold ? 'font-bold' : '',
+        elementData.isItalic ? 'italic' : '',
+        elementData.isUnderline ? 'underline' : '',
+        textAlignClass
+      ]"
+      :style="{ color: elementData.textColor }">
       {{ elementData.text }}
     </p>
   </div>
@@ -23,6 +31,15 @@ export default {
     elementData: {
       type: Object,
       required: true
+    }
+  },
+  computed: {
+    textAlignClass() {
+      switch (this.elementData.textAlign) {
+        case 'center': return 'text-center';
+        case 'right': return 'text-right';
+        default: return 'text-left';
+      }
     }
   },
   methods: {
