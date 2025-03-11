@@ -62,6 +62,8 @@
           :templates="activeSectionTemplates"
           @close="toggleSecondarySidebar(false)"
           @select-template="addSectionTemplate"
+          @mouse-leave="handleSecondarySidebarLeave"
+          @mouse-enter="handleSecondarySidebarEnter"
         />
       </div>
     </div>
@@ -229,7 +231,11 @@ export default {
       dragGhostPosition: { x: 0, y: 0 },
       // Hover timeouts for section selection
       hoverTimeout: null,
-      hoverDelay: 300 // ms
+      hoverDelay: 300, // ms
+      closeSidebarTimeout: null,
+      isMouseOverSecondarySidebar: false,
+      isMouseOverSectionItem: false,
+      currentHoveredSection: null
     };
   },
   computed: {
@@ -278,33 +284,67 @@ export default {
       }
     },
     
+    // Handle mouse enter and leave for better hover management
+    handleSecondarySidebarEnter() {
+      this.isMouseOverSecondarySidebar = true;
+      if (this.closeSidebarTimeout) {
+        clearTimeout(this.closeSidebarTimeout);
+        this.closeSidebarTimeout = null;
+      }
+    },
+    
+    handleSecondarySidebarLeave() {
+      this.isMouseOverSecondarySidebar = false;
+      this.scheduleCloseSidebar();
+    },
+    
+    scheduleCloseSidebar() {
+      if (!this.isMouseOverSecondarySidebar && !this.isMouseOverSectionItem) {
+        if (this.closeSidebarTimeout) {
+          clearTimeout(this.closeSidebarTimeout);
+        }
+        this.closeSidebarTimeout = setTimeout(() => {
+          this.toggleSecondarySidebar(false);
+        }, 300);
+      }
+    },
+    
     handleSectionLeave() {
       // Clear any existing timeout
       if (this.hoverTimeout) {
         clearTimeout(this.hoverTimeout);
         this.hoverTimeout = null;
       }
+      
+      this.isMouseOverSectionItem = false;
+      this.scheduleCloseSidebar();
     },
     
     // Now update the section selection and hover methods
     handleSectionHover(sectionType) {
-      console.log('Section hover detected:', sectionType);
+      this.currentHoveredSection = sectionType;
+      this.isMouseOverSectionItem = true;
+      
       // Clear any existing timeout
       if (this.hoverTimeout) {
         clearTimeout(this.hoverTimeout);
       }
       
+      // Clear close timeout if exists
+      if (this.closeSidebarTimeout) {
+        clearTimeout(this.closeSidebarTimeout);
+        this.closeSidebarTimeout = null;
+      }
+      
       // Set a new timeout to show the secondary sidebar
       this.hoverTimeout = setTimeout(() => {
         if (sectionType === 'testimonials') {
-          console.log('Testimonials hover triggered - showing sidebar');
           this.toggleSecondarySidebar(true, sectionType);
         }
       }, this.hoverDelay);
     },
     
     selectSection(section) {
-      console.log('Section selected:', section.type);
       // If we have templates for this section type, show them
       if (section.type === 'testimonials') {
         this.toggleSecondarySidebar(true, section.type);
@@ -473,33 +513,26 @@ export default {
       // Ensure toIndex is valid
       toIndex = Math.max(0, Math.min(this.canvasElements.length, toIndex));
       
-      // Get the element to move
-      const elementToMove = JSON.parse(JSON.stringify(this.canvasElements[fromIndex]));
-      
-      // Create a new array with the element moved
+      // Create a new array with the elements in the new order
       const newElements = [...this.canvasElements];
+      const elementToMove = {...newElements[fromIndex]};
+      
+      // Remove the element from its original position
       newElements.splice(fromIndex, 1);
+      
+      // Insert it at the new position
       newElements.splice(toIndex, 0, elementToMove);
       
-      // Update the state using the removeElement and addElementToCanvas actions
-      // We need to handle the selected element index separately
-      const wasSelected = this.selectedElementIndex === fromIndex;
+      // Update the store with the entire new array
+      this.$store.commit('pageBuilder/SET_CANVAS_ELEMENTS', newElements);
       
-      this.removeElement(fromIndex);
-      
-      // Insert at the correct index
-      this.$store.commit('pageBuilder/ADD_CANVAS_ELEMENT', elementToMove);
-      
-      // Now move to the correct position if needed
-      if (toIndex !== newElements.length - 1) {
-        for (let i = newElements.length - 1; i > toIndex; i--) {
-          this.moveElement(i, i - 1);
-        }
-      }
-      
-      // Restore selection if needed
-      if (wasSelected) {
+      // Update selection if needed
+      if (this.selectedElementIndex === fromIndex) {
         this.selectElement(toIndex);
+      } else if (this.selectedElementIndex > fromIndex && this.selectedElementIndex <= toIndex) {
+        this.selectElement(this.selectedElementIndex - 1);
+      } else if (this.selectedElementIndex < fromIndex && this.selectedElementIndex >= toIndex) {
+        this.selectElement(this.selectedElementIndex + 1);
       }
     }
   },
@@ -510,6 +543,10 @@ export default {
     // Clear any remaining hover timeouts
     if (this.hoverTimeout) {
       clearTimeout(this.hoverTimeout);
+    }
+    
+    if (this.closeSidebarTimeout) {
+      clearTimeout(this.closeSidebarTimeout);
     }
   }
 };

@@ -3,6 +3,8 @@
   <div 
     class="secondary-sidebar bg-white border-r border-gray-200 shadow-sm overflow-y-auto transition-all duration-300 z-50"
     :class="{ 'sidebar-visible': visible, 'sidebar-hidden': !visible }"
+    @mouseenter="$emit('mouse-enter')"
+    @mouseleave="$emit('mouse-leave')"
   >
     <div v-if="visible">
       <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -87,7 +89,7 @@ export default {
 <style scoped>
 .secondary-sidebar {
   position: fixed;
-  left: 64px; /* Width of the primary sidebar */
+  left: 256px; /* Width of the primary sidebar - increased from 64px to prevent overlap */
   top: 0;
   height: 100%;
   width: 260px;

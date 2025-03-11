@@ -85,7 +85,6 @@ export default {
       state.activeSectionType = type;
     },
     SET_SHOW_SECONDARY_SIDEBAR(state, value) {
-      console.log('Mutation: SET_SHOW_SECONDARY_SIDEBAR', value);
       state.showSecondarySidebar = value;
     },
     // Add new mutation for setting the entire canvas elements array
@@ -119,16 +118,12 @@ export default {
       }
     },
     showSecondarySidebar({ commit }, sectionType) {
-      console.log('Action: showSecondarySidebar called with:', sectionType);
       // First ensure the section type is set
       commit('SET_ACTIVE_SECTION_TYPE', sectionType);
-      // Then show the sidebar with a slight delay to ensure state updates in the right order
-      setTimeout(() => {
-        commit('SET_SHOW_SECONDARY_SIDEBAR', true);
-      }, 10);
+      // Then show the sidebar
+      commit('SET_SHOW_SECONDARY_SIDEBAR', true);
     },
     hideSecondarySidebar({ commit }) {
-      console.log('Action: hideSecondarySidebar called');
       commit('SET_SHOW_SECONDARY_SIDEBAR', false);
       // Clear section type after a delay to prevent flickering
       setTimeout(() => {
@@ -156,6 +151,10 @@ export default {
       
       // Hide the secondary sidebar
       dispatch('hideSecondarySidebar');
+    },
+    // New action to update the entire canvas elements array
+    setCanvasElements({ commit }, elements) {
+      commit('SET_CANVAS_ELEMENTS', elements);
     }
   },
   getters: {
