@@ -116,9 +116,10 @@
             <!-- Top insertion zone -->
             <div 
               class="insertion-zone w-full"
-              :class="{'active': hoveredInsertionIndex === 0 || (isDragging && dropzoneIndex === -1)}"
+              :class="{'active': hoveredInsertionIndex === 0 || (isDragging && dropzoneIndex === 0)}"
               @mouseenter="setHoveredInsertionIndex(0)"
               @mouseleave="clearHoveredInsertionIndex"
+              data-dropzone-index="0"
             >
               <div class="relative flex justify-center w-full">
                 <div class="insertion-line"></div>
@@ -544,15 +545,21 @@ export default {
       // If we found a close dropzone within a reasonable distance
       if (closestDropzone && closestDistance < 50) {
         // Get the index from the dropzone
-        let index = -1;
+        let index = 0; // Default to top position
+        
         if (closestDropzone.dataset.dropzoneIndex !== undefined) {
+          // This is a dropzone after an element
           index = parseInt(closestDropzone.dataset.dropzoneIndex, 10);
         }
+        
+        // Set the dropzone index - this is the index where the element will be inserted
         this.setDropzoneIndex(index);
         
-        // Update hovered index for visual feedback
-        const dropzoneIndex = index === -1 ? 0 : index + 1;
-        this.hoveredInsertionIndex = dropzoneIndex;
+        // Also update hovered index for visual feedback
+        // The hoveredInsertionIndex corresponds to insertion points (between elements)
+        // Dropzone 0 means insert after element 0, but hoveredInsertionIndex 0 means insert at the top
+        const hoveredIndex = index === -1 ? 0 : index + 1;
+        this.hoveredInsertionIndex = hoveredIndex;
       } else {
         // If no reasonable dropzone found, reset
         this.dropzoneIndex = null;
@@ -597,17 +604,14 @@ export default {
     
     moveElement(fromIndex, toIndex) {
       // Validate indices
-      if (fromIndex === toIndex || fromIndex < 0 || fromIndex >= this.canvasElements.length) {
+      if (fromIndex < 0 || fromIndex >= this.canvasElements.length) {
         return;
       }
       
-      // Handle the special case of dropping at the top
-      if (toIndex === -1) {
-        toIndex = 0;
+      // If trying to drop at the same position, do nothing
+      if (fromIndex === toIndex) {
+        return;
       }
-      
-      // Ensure toIndex is valid
-      toIndex = Math.max(0, Math.min(this.canvasElements.length, toIndex));
       
       // Create a new array with the elements in the new order
       const newElements = [...this.canvasElements];
@@ -616,18 +620,22 @@ export default {
       // Remove the element from its original position
       newElements.splice(fromIndex, 1);
       
-      // Insert it at the new position
-      newElements.splice(toIndex, 0, elementToMove);
+      // Insert it at the new position - if toIndex is after fromIndex, 
+      // we need to adjust because the removal shifted everything up
+      const adjustedToIndex = toIndex > fromIndex ? toIndex - 1 : toIndex;
+      
+      // Insert at the adjusted position
+      newElements.splice(adjustedToIndex, 0, elementToMove);
       
       // Update the store with the entire new array
       this.$store.commit('pageBuilder/SET_CANVAS_ELEMENTS', newElements);
       
       // Update selection if needed
       if (this.selectedElementIndex === fromIndex) {
-        this.selectElement(toIndex);
-      } else if (this.selectedElementIndex > fromIndex && this.selectedElementIndex <= toIndex) {
+        this.selectElement(adjustedToIndex);
+      } else if (this.selectedElementIndex > fromIndex && this.selectedElementIndex <= adjustedToIndex) {
         this.selectElement(this.selectedElementIndex - 1);
-      } else if (this.selectedElementIndex < fromIndex && this.selectedElementIndex >= toIndex) {
+      } else if (this.selectedElementIndex < fromIndex && this.selectedElementIndex >= adjustedToIndex) {
         this.selectElement(this.selectedElementIndex + 1);
       }
     }
