@@ -86,7 +86,7 @@
             <!-- Dropzone indicator for the top position -->
             <div 
               v-show="isDragging" 
-              class="dropzone w-full my-1 border-2 border-transparent transition-colors"
+              class="dropzone w-full"
               :class="{'border-blue-500': dropzoneIndex === -1}"
               @dragover.prevent="setDropzoneIndex(-1)"
             ></div>
@@ -111,7 +111,7 @@
               <!-- Dropzone indicator after this element -->
               <div 
                 v-show="isDragging && draggedElementIndex !== index" 
-                class="dropzone w-full my-1 border-2 border-transparent transition-colors"
+                class="dropzone w-full"
                 :class="{'border-blue-500': dropzoneIndex === index}"
                 @dragover.prevent="setDropzoneIndex(index)"
                 :data-dropzone-index="index"
@@ -532,16 +532,18 @@ export default {
   cursor: grabbing;
 }
 
-/* When dragging, ensure all the dropzones are clearly visible */
+/* Make dropzones more subtle by default */
 .is-dragging .dropzone {
-  min-height: 20px;
-  margin: 8px 0;
-  background-color: rgba(59, 130, 246, 0.05);
+  height: 2px;
+  margin: 1px 0;
+  border: none;
+  transition: all 0.2s ease;
 }
 
-/* Make dropzones more obvious when hovered */
-.is-dragging .dropzone:hover, .is-dragging .dropzone.border-blue-500 {
-  background-color: rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.6);
+/* Only show the dropzone when the cursor is near or over it */
+.is-dragging .dropzone.border-blue-500 {
+  height: 4px;
+  background-color: #3b82f6;
+  margin: 2px 0;
 }
 </style>
