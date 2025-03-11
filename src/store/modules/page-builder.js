@@ -106,15 +106,16 @@ export default {
         });
       }
     },
-    showSecondarySidebar({ commit }, sectionType) {
-      console.log('Action: showSecondarySidebar', sectionType);
-      commit('SET_ACTIVE_SECTION_TYPE', sectionType);
-      commit('SET_SHOW_SECONDARY_SIDEBAR', true);
-    },
-    hideSecondarySidebar({ commit }) {
-      console.log('Action: hideSecondarySidebar');
-      commit('SET_SHOW_SECONDARY_SIDEBAR', false);
-    },
+  // Correct action names - no duplicate "Secondary"
+  showSecondarySidebar({ commit }, sectionType) {
+    console.log('Action: showSecondarySidebar called with:', sectionType);
+    commit('SET_ACTIVE_SECTION_TYPE', sectionType);
+    commit('SET_SHOW_SECONDARY_SIDEBAR', true);
+  },
+  hideSecondarySidebar({ commit }) {
+    console.log('Action: hideSecondarySidebar called');
+    commit('SET_SHOW_SECONDARY_SIDEBAR', false);
+  },
     selectSectionTemplate({ commit, dispatch }, template) {
       commit('ADD_CANVAS_ELEMENT', template);
       dispatch('hideSecondarySidebar');

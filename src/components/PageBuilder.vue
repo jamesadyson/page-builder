@@ -258,82 +258,60 @@ export default {
       return this.getActiveSectionTemplates || [];
     }
   },
-  methods: {
-    ...mapActions('pageBuilder', [
-      'openElementSelector',
-      'closeElementSelector',
-      'addElementToCanvas',
-      'removeElement',
-      'selectElement',
-      'updateElementData',
-      'showSecondarySidebar',
-      'hideSecondarySidebar',
-      'selectSectionTemplate'
-    ]),
-    selectElementFromCanvas(index) {
-      this.selectElement(index);
-    },
-    isTextElement() {
-      if (this.selectedElementIndex === null) return false;
-      
-      const componentName = this.canvasElements[this.selectedElementIndex].component;
-      return ['TextElement', 'HeadingElement', 'BulletElement', 'FeatureElement'].includes(componentName);
-    },
-    getElementName(componentName) {
-      const elementMap = {
-        'HeadingElement': 'Heading',
-        'TextElement': 'Text Block',
-        'BulletElement': 'Bullet List',
-        'FeatureElement': 'Feature Block',
-        'TestimonialSection': 'Testimonial'
-      };
-      return elementMap[componentName] || 'Element';
-    },
+methods: {
+  ...mapActions('pageBuilder', [
+    'openElementSelector',
+    'closeElementSelector',
+    'addElementToCanvas',
+    'removeElement', 
+    'selectElement',
+    'updateElementData',
+    // Remove these - we'll implement them directly
+    // 'showSecondarySidebar',
+    // 'hideSecondarySidebar',
+    'selectSectionTemplate'
+  ]),
+
+  // Direct implementation of sidebar methods
+  showSecondarySidebar(sectionType) {
+    console.log('Directly calling showSecondarySidebar with:', sectionType);
+    this.$store.dispatch('pageBuilder/showSecondarySidebar', sectionType);
+  },
+  
+  hideSecondarySidebar() {
+    console.log('Directly calling hideSecondarySidebar');
+    this.$store.dispatch('pageBuilder/hideSecondarySidebar');
+  },
+  
+  // Now update the section selection and hover methods
+  handleSectionHover(sectionType) {
+    // Clear any existing timeout
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout);
+    }
     
-    // Handle section selection and hover events
-    handleSectionHover(sectionType) {
-      // Clear any existing timeout
-      if (this.hoverTimeout) {
-        clearTimeout(this.hoverTimeout);
+    // Set a new timeout to show the secondary sidebar
+    this.hoverTimeout = setTimeout(() => {
+      if (sectionType === 'testimonials') {
+        console.log('Testimonials hover triggered - showing sidebar');
+        this.showSecondarySidebar(sectionType);
       }
-      
-      // Set a new timeout to show the secondary sidebar
-      this.hoverTimeout = setTimeout(() => {
-        // Check if we have templates for this section type before showing
-        if (sectionType === 'testimonials' && 
-            this.$store.state.pageBuilder.sectionTemplates.testimonials && 
-            this.$store.state.pageBuilder.sectionTemplates.testimonials.length > 0) {
-          
-          console.log('Showing sidebar for testimonials');
-          this.showSecondarySidebar(sectionType);
-        }
-      }, this.hoverDelay);
-    },
-    
-    handleSectionLeave() {
-      // Clear the timeout if the mouse leaves before it triggers
-      if (this.hoverTimeout) {
-        clearTimeout(this.hoverTimeout);
-        this.hoverTimeout = null;
-      }
-    },
-    
-    selectSection(section) {
-      // If we have templates for this section type, show them
-      if (section.type === 'testimonials' && this.$store.state.pageBuilder.sectionTemplates.testimonials) {
-        this.showSecondarySidebar(section.type);
-      } else {
-        console.log(`Selected section: ${section.name}`);
-      }
-    },
-    
-    hideSecondarySidebar() {
-      this.hideSecondarySidebar();
-    },
-    
-    addSectionTemplate(template) {
-      this.selectSectionTemplate(template);
-    },
+    }, this.hoverDelay);
+  },
+  
+  selectSection(section) {
+    console.log('Section selected:', section.type);
+    // If we have templates for this section type, show them
+    if (section.type === 'testimonials') {
+      this.showSecondarySidebar(section.type);
+    } else {
+      console.log(`Selected section: ${section.name}`);
+    }
+  },
+  
+  addSectionTemplate(template) {
+    this.selectSectionTemplate(template);
+  },
     
     // Improved drag and drop methods
     startDrag(event, index) {
