@@ -1,18 +1,23 @@
 <!-- src/components/PageBuilder.vue -->
 <template>
   <div class="page-builder flex h-screen">
-    <!-- Left Sidebar for Sections -->
-    <div class="w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto relative">
+    <!-- Left Sidebar for Sections and Elements -->
+    <div 
+      class="w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto relative"
+      :class="{ 'sidebar-highlight': sidebarHighlighted }"
+    >
       <div class="p-4">
-        <h2 class="text-lg font-medium text-gray-800">{{ sidebarTitle }}</h2>
+        <h2 class="text-lg font-medium text-gray-800">Page Builder</h2>
       </div>
-      <div v-if="showElementSelector">
+      
+      <!-- Basic Elements -->
+      <div>
         <div class="px-4 py-2 text-sm font-medium text-gray-600">Basic blocks</div>
         <div
           v-for="(element, index) in basicElements"
           :key="'basic-' + index"
           class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center"
-          @click="addElementToCanvas(element)"
+          @click="addElementToCanvas(element, activeInsertionIndex !== null ? activeInsertionIndex : null)"
         >
           <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
             <component :is="element.icon" class="w-5 h-5" />
@@ -25,7 +30,7 @@
           v-for="(element, index) in interactiveElements"
           :key="'interactive-' + index"
           class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center"
-          @click="addElementToCanvas(element)"
+          @click="addElementToCanvas(element, activeInsertionIndex !== null ? activeInsertionIndex : null)"
         >
           <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
             <component :is="element.icon" class="w-5 h-5" />
@@ -34,7 +39,7 @@
         </div>
       </div>
 
-      <div v-if="!showElementSelector" class="sidebar-sections">
+      <div class="sidebar-sections mt-6">
         <div class="px-4 py-2 text-sm font-medium text-gray-600">Sections</div>
         <div
           v-for="(section, index) in sections"
@@ -61,7 +66,7 @@
           :section-type="activeSectionType"
           :templates="activeSectionTemplates"
           @close="toggleSecondarySidebar(false)"
-          @select-template="addSectionTemplate"
+          @select-template="(template) => addSectionTemplate(template, activeInsertionIndex !== null ? activeInsertionIndex : null)"
           @mouse-leave="handleSecondarySidebarLeave"
           @mouse-enter="handleSecondarySidebarEnter"
         />
@@ -90,24 +95,44 @@
       <div class="flex-1 p-8 overflow-y-auto" ref="canvasArea">
         <div class="bg-white shadow-sm rounded-md mx-auto max-w-4xl min-h-[600px] relative canvas-container">
           <div v-if="canvasElements.length === 0" class="absolute inset-0 flex items-center justify-center">
-            <button
-              @click="openElementSelector"
-              class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50"
+            <!-- Initial empty state -->
+            <div 
+              class="insertion-zone w-full py-4 flex justify-center items-center"
+              @mouseenter="setHoveredInsertionIndex(0)"
+              @mouseleave="clearHoveredInsertionIndex"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
+              <button
+                @click="activateInsertionPoint(0)"
+                class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div v-else>
-            <!-- Dropzone indicator for the top position -->
+            <!-- Top insertion zone -->
             <div 
-              v-show="isDragging" 
-              class="dropzone w-full"
-              :class="{'border-blue-500': dropzoneIndex === -1}"
-              @dragover.prevent="setDropzoneIndex(-1)"
-            ></div>
+              class="insertion-zone w-full"
+              :class="{'active': hoveredInsertionIndex === 0 || (isDragging && dropzoneIndex === -1)}"
+              @mouseenter="setHoveredInsertionIndex(0)"
+              @mouseleave="clearHoveredInsertionIndex"
+            >
+              <div class="relative flex justify-center w-full">
+                <div class="insertion-line"></div>
+                <button
+                  v-show="hoveredInsertionIndex === 0 && !isDragging"
+                  @click="activateInsertionPoint(0)"
+                  class="insertion-button"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
+            </div>
             
             <!-- Render canvas elements -->
             <div 
@@ -127,20 +152,33 @@
                 :class="{'opacity-50': isDragging && draggedElementIndex === index}"
               />
               
-              <!-- Dropzone indicator after this element -->
+              <!-- Insertion zone after this element -->
               <div 
-                v-show="isDragging && draggedElementIndex !== index" 
-                class="dropzone w-full"
-                :class="{'border-blue-500': dropzoneIndex === index}"
-                @dragover.prevent="setDropzoneIndex(index)"
+                class="insertion-zone w-full"
+                :class="{'active': hoveredInsertionIndex === index + 1 || (isDragging && dropzoneIndex === index)}"
+                @mouseenter="setHoveredInsertionIndex(index + 1)"
+                @mouseleave="clearHoveredInsertionIndex"
                 :data-dropzone-index="index"
-              ></div>
+              >
+                <div class="relative flex justify-center w-full">
+                  <div class="insertion-line"></div>
+                  <button
+                    v-show="hoveredInsertionIndex === index + 1 && !isDragging"
+                    @click="activateInsertionPoint(index + 1)"
+                    class="insertion-button"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
             
             <!-- Add element button after content -->
             <div class="py-4 flex justify-center">
               <button
-                @click="openElementSelector"
+                @click="activateInsertionPoint(canvasElements.length)"
                 class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -222,13 +260,18 @@ export default {
   },
   data() {
     return {
-      sidebarTitle: 'Add section',
+      // Hover and insertion tracking
+      hoveredInsertionIndex: null, // Track which insertion point is being hovered
+      activeInsertionIndex: null, // The insertion point that was clicked
+      sidebarHighlighted: false, // Track if sidebar should be highlighted
+      
       // Drag and drop state
       isDragging: false,
       draggedElementIndex: null,
       dropzoneIndex: null,
       dragStartPosition: { x: 0, y: 0 },
       dragGhostPosition: { x: 0, y: 0 },
+      
       // Hover timeouts for section selection
       hoverTimeout: null,
       hoverDelay: 300, // ms
@@ -242,7 +285,6 @@ export default {
     ...mapState('pageBuilder', [
       'canvasElements',
       'selectedElementIndex',
-      'showElementSelector',
       'activeSectionType',
       'showSecondarySidebar'
     ]),
@@ -266,14 +308,54 @@ export default {
   },
   methods: {
     ...mapActions('pageBuilder', [
-      'openElementSelector',
-      'closeElementSelector',
-      'addElementToCanvas',
+      'insertElementAtIndex',
       'removeElement', 
       'selectElement',
       'updateElementData',
       'selectSectionTemplate'
     ]),
+
+    // New insertion point management
+    setHoveredInsertionIndex(index) {
+      this.hoveredInsertionIndex = index;
+    },
+    
+    clearHoveredInsertionIndex() {
+      // Only clear if we're not dragging
+      if (!this.isDragging) {
+        this.hoveredInsertionIndex = null;
+      }
+    },
+    
+    activateInsertionPoint(index) {
+      this.activeInsertionIndex = index;
+      this.highlightSidebar();
+    },
+    
+    // Sidebar highlight animation
+    highlightSidebar() {
+      this.sidebarHighlighted = true;
+      setTimeout(() => {
+        this.sidebarHighlighted = false;
+      }, 600); // Animation duration
+    },
+    
+    // Add element at specific index
+    addElementToCanvas(element, insertIndex = null) {
+      // If we have an insertion index, use it
+      if (insertIndex !== null) {
+        this.$store.dispatch('pageBuilder/insertElementAtIndex', {
+          element,
+          index: insertIndex
+        });
+      } else {
+        // Otherwise add to the end
+        this.$store.dispatch('pageBuilder/addElementToCanvas', element);
+      }
+      
+      // Reset insertion index
+      this.activeInsertionIndex = null;
+    },
 
     // Toggle secondary sidebar method
     toggleSecondarySidebar(show, sectionType = null) {
@@ -320,7 +402,7 @@ export default {
       this.scheduleCloseSidebar();
     },
     
-    // Now update the section selection and hover methods
+    // Section hover methods
     handleSectionHover(sectionType) {
       this.currentHoveredSection = sectionType;
       this.isMouseOverSectionItem = true;
@@ -353,8 +435,19 @@ export default {
       }
     },
     
-    addSectionTemplate(template) {
-      this.selectSectionTemplate(template);
+    addSectionTemplate(template, insertIndex = null) {
+      // If we have an insertion index, use it
+      if (insertIndex !== null) {
+        this.$store.dispatch('pageBuilder/insertSectionTemplateAtIndex', {
+          template,
+          index: insertIndex
+        });
+      } else {
+        this.selectSectionTemplate(template);
+      }
+      
+      // Reset insertion index
+      this.activeInsertionIndex = null;
     },
     
     // Helper method for Element Settings panel
@@ -417,7 +510,7 @@ export default {
     
     findDropzoneAtPosition(x, y) {
       // Get all dropzone elements (including the top one and those between elements)
-      const dropzones = document.querySelectorAll('.dropzone');
+      const dropzones = document.querySelectorAll('.insertion-zone');
       
       // If no dropzones are found, exit early
       if (dropzones.length === 0) {
@@ -456,9 +549,14 @@ export default {
           index = parseInt(closestDropzone.dataset.dropzoneIndex, 10);
         }
         this.setDropzoneIndex(index);
+        
+        // Update hovered index for visual feedback
+        const dropzoneIndex = index === -1 ? 0 : index + 1;
+        this.hoveredInsertionIndex = dropzoneIndex;
       } else {
         // If no reasonable dropzone found, reset
         this.dropzoneIndex = null;
+        this.hoveredInsertionIndex = null;
       }
     },
     
@@ -494,6 +592,7 @@ export default {
       // Reset drag-related state
       this.draggedElementIndex = null;
       this.dropzoneIndex = null;
+      this.hoveredInsertionIndex = null;
     },
     
     moveElement(fromIndex, toIndex) {
@@ -502,14 +601,11 @@ export default {
         return;
       }
       
- // Handle the special case of dropping at the top
-  if (toIndex === -1) {
-    toIndex = 0;
-  }
-  // Removing the problematic adjustment:
-  // We don't need to adjust the target index when moving down
-  // because the dropzone index already accounts for this
-  
+      // Handle the special case of dropping at the top
+      if (toIndex === -1) {
+        toIndex = 0;
+      }
+      
       // Ensure toIndex is valid
       toIndex = Math.max(0, Math.min(this.canvasElements.length, toIndex));
       
@@ -564,16 +660,114 @@ export default {
   overflow: visible;
 }
 
-/* Dropzone styling */
-.dropzone {
-  height: 6px;
-  border-radius: 3px;
+/* Enhanced insertion zone styles */
+.insertion-zone {
+  height: 28px;
   transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 4px 0;
+  padding: 0;
+  width: 100%;
 }
 
-.dropzone.border-blue-500 {
-  height: 10px;
-  background-color: rgba(59, 130, 246, 0.1);
+.insertion-line {
+  width: 90%;
+  height: 2px;
+  background-color: #d1d5db; /* gray-300 */
+  transition: all 0.2s ease;
+  border-radius: 1px;
+  opacity: 0;
+}
+
+/* Only show the line for the specific insertion zone being hovered */
+.insertion-zone:hover .insertion-line {
+  opacity: 1;
+  height: 2px;
+  background-color: #9ca3af; /* gray-400 */
+}
+
+.insertion-zone.active .insertion-line {
+  opacity: 1;
+  height: 3px;
+  background-color: #3b82f6; /* blue-500 */
+}
+
+.insertion-button {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border: 1px solid #d1d5db; /* gray-300 */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  top: 50%;
+  transform: translateY(-50%); /* Center vertically */
+}
+
+.insertion-zone:hover .insertion-button {
+  opacity: 1;
+}
+
+.insertion-button:hover {
+  transform: translateY(-50%) scale(1.2); /* Keep vertical centering while scaling */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6; /* blue-500 */
+}
+
+/* When the insertion point is active */
+.insertion-zone.active .insertion-button {
+  opacity: 1;
+  background-color: #3b82f6; /* blue-500 */
+}
+
+.insertion-zone.active .insertion-button svg {
+  color: white;
+}
+
+/* When dragging - only show the active dropzone */
+.is-dragging .insertion-zone .insertion-line {
+  opacity: 0; 
+}
+
+.is-dragging .insertion-zone.active .insertion-line {
+  opacity: 1;
+  height: 3px;
+  background-color: #3b82f6; /* blue-500 */
+}
+
+/* Sidebar highlight animation */
+@keyframes highlight-sidebar {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+  }
+  40% {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+  }
+  70% {
+    transform: scale(1.01);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.sidebar-highlight {
+  animation: highlight-sidebar 0.6s ease;
 }
 
 /* Subtle animation for the drag ghost */
@@ -593,21 +787,6 @@ export default {
 
 :deep(.cursor-move:active) {
   cursor: grabbing;
-}
-
-/* Make dropzones more subtle by default */
-.is-dragging .dropzone {
-  height: 2px;
-  margin: 1px 0;
-  border: none;
-  transition: all 0.2s ease;
-}
-
-/* Only show the dropzone when the cursor is near or over it */
-.is-dragging .dropzone.border-blue-500 {
-  height: 4px;
-  background-color: #3b82f6;
-  margin: 2px 0;
 }
 
 /* Section item hover effect */

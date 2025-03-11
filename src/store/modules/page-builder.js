@@ -6,7 +6,6 @@ export default {
   state: {
     canvasElements: [],
     selectedElementIndex: null,
-    showElementSelector: false,
     activeSectionType: null,
     showSecondarySidebar: false,
     availableElements: {
@@ -71,6 +70,20 @@ export default {
         data: JSON.parse(JSON.stringify(element.data)) // Create a deep copy
       });
     },
+    INSERT_CANVAS_ELEMENT(state, { element, index }) {
+      const newElement = {
+        component: element.component,
+        data: JSON.parse(JSON.stringify(element.data)) // Create a deep copy
+      };
+      
+      // Insert at specific index
+      state.canvasElements.splice(index, 0, newElement);
+      
+      // Adjust the selected element index if necessary
+      if (state.selectedElementIndex !== null && state.selectedElementIndex >= index) {
+        state.selectedElementIndex++;
+      }
+    },
     REMOVE_CANVAS_ELEMENT(state, index) {
       state.canvasElements.splice(index, 1);
       // Reset selected element if it was the one removed
@@ -99,15 +112,12 @@ export default {
     }
   },
   actions: {
-    openElementSelector({ commit }) {
-      commit('SET_SHOW_ELEMENT_SELECTOR', true);
+    // New action for inserting elements at specific indices
+    insertElementAtIndex({ commit }, { element, index }) {
+      commit('INSERT_CANVAS_ELEMENT', { element, index });
     },
-    closeElementSelector({ commit }) {
-      commit('SET_SHOW_ELEMENT_SELECTOR', false);
-    },
-    addElementToCanvas({ commit, dispatch }, element) {
+    addElementToCanvas({ commit }, element) {
       commit('ADD_CANVAS_ELEMENT', element);
-      dispatch('closeElementSelector');
     },
     removeElement({ commit }, index) {
       commit('REMOVE_CANVAS_ELEMENT', index);
@@ -158,7 +168,32 @@ export default {
       // Hide the secondary sidebar
       dispatch('hideSecondarySidebar');
     },
-    // New action to update the entire canvas elements array
+    // New action for inserting section templates at specific indices
+    insertSectionTemplateAtIndex({ commit, dispatch, state }, { template, index }) {
+      // If template is an ID, find the actual template
+      let actualTemplate;
+      if (typeof template === 'string') {
+        const templates = state.sectionTemplates[state.activeSectionType] || [];
+        actualTemplate = templates.find(t => t.id === template);
+      } else {
+        actualTemplate = template;
+      }
+      
+      // If template found, insert at the specified index
+      if (actualTemplate) {
+        commit('INSERT_CANVAS_ELEMENT', {
+          element: {
+            component: actualTemplate.component,
+            data: JSON.parse(JSON.stringify(actualTemplate.data))
+          },
+          index
+        });
+      }
+      
+      // Hide the secondary sidebar
+      dispatch('hideSecondarySidebar');
+    },
+    // Action to update the entire canvas elements array
     setCanvasElements({ commit }, elements) {
       commit('SET_CANVAS_ELEMENTS', elements);
     }
@@ -173,7 +208,6 @@ export default {
     },
     getAvailableElements: state => state.availableElements,
     getAvailableSections: state => state.availableSections,
-    isElementSelectorVisible: state => state.showElementSelector,
     isSecondarySidebarVisible: state => state.showSecondarySidebar,
     getActiveSectionType: state => state.activeSectionType,
     getActiveSectionTemplates: state => {
