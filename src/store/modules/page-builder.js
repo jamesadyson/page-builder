@@ -8,47 +8,8 @@ export default {
     selectedElementIndex: null,
     activeSectionType: null,
     showSecondarySidebar: false,
-    availableElements: {
-      basic: [
-        { 
-          name: 'Heading', 
-          icon: 'HeadingIcon',
-          component: 'HeadingElement',
-          data: { 
-            text: 'Your Heading', 
-            level: 1, 
-            fontSize: 'text-3xl', 
-            isBold: true, 
-            textAlign: 'center' 
-          } 
-        },
-        { 
-          name: 'Text Block', 
-          icon: 'TextIcon',
-          component: 'TextElement',
-          data: { text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.' } 
-        },
-        { 
-          name: 'Bullet List', 
-          icon: 'BulletIcon',
-          component: 'BulletElement',
-          data: { items: ['Item 1', 'Item 2', 'Item 3'] } 
-        }
-      ],
-      interactive: [
-        { 
-          name: 'Feature Block', 
-          icon: 'FeatureIcon',
-          component: 'FeatureElement',
-          data: { 
-            title: 'Feature Title', 
-            description: 'Feature description goes here',
-            imageUrl: '/placeholder.jpg'
-          } 
-        }
-      ]
-    },
     availableSections: [
+      { name: 'Attention Bar', icon: 'AttentionIcon', type: 'attentionBars' },
       { name: 'Hero', icon: 'HeroIcon', type: 'hero' },
       { name: 'Features', icon: 'FeaturesIcon', type: 'features' },
       { name: 'Product', icon: 'ProductIcon', type: 'product' },
@@ -114,86 +75,84 @@ export default {
     SET_SIDEBAR_VIEW(state, view) {
       state.sidebarView = view;
     },
-    // NEW: Add field formatting metadata to a specific section field
-    // In src/store/modules/page-builder.js, update the UPDATE_FIELD_FORMAT mutation
-// to ensure it correctly adds format data to sections:
-
-// Find and review this mutation:
-UPDATE_FIELD_FORMAT(state, { index, fieldPath, formatData }) {
-  if (index === null || index >= state.canvasElements.length) return;
-  
-  const element = state.canvasElements[index];
-  
-  // Ensure element data exists
-  if (!element.data) {
-    element.data = {};
-  }
-  
-  // For section components, we need to store format data differently
-  if (element.component === 'HeroSection' || element.component === 'TestimonialSection') {
-    // For Hero and Testimonial sections, store format under fieldNameFormat
-    const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
-    
-    // Initialize or update the format object
-    if (!element.data[formatKey]) {
-      element.data[formatKey] = {};
-    }
-    
-    // Update with new format data
-    element.data[formatKey] = {
-      ...element.data[formatKey],
-      ...formatData
-    };
-    
-    return;
-  }
-  
-  // For basic elements or if no field path, update normally
-  if (!fieldPath) {
-    // Update entire element format
-    element.data = {
-      ...element.data,
-      ...formatData
-    };
-    return;
-  }
-  
-  // Handle nested fields (e.g., testimonials.0.author)
-  // Split the path into parts
-  const pathParts = fieldPath.split('.');
-  let target = element.data;
-  
-  // Navigate to the parent object
-  for (let i = 0; i < pathParts.length - 1; i++) {
-    const part = pathParts[i];
-    
-    if (!target[part]) {
-      // Create the path if it doesn't exist
-      if (!isNaN(Number(pathParts[i + 1]))) {
-        // If next part is a number, create an array
-        target[part] = [];
-      } else {
-        // Otherwise create an object
-        target[part] = {};
+    UPDATE_FIELD_FORMAT(state, { index, fieldPath, formatData }) {
+      if (index === null || index >= state.canvasElements.length) return;
+      
+      const element = state.canvasElements[index];
+      
+      // Ensure element data exists
+      if (!element.data) {
+        element.data = {};
       }
+      
+      // For section components, we need to store format data differently
+      if (element.component === 'HeroSection' || 
+          element.component === 'TestimonialSection' || 
+          element.component === 'FeaturesSection' ||
+          element.component === 'AttentionBarSection') {
+        // For sections, store format under fieldNameFormat
+        const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
+        
+        // Initialize or update the format object
+        if (!element.data[formatKey]) {
+          element.data[formatKey] = {};
+        }
+        
+        // Update with new format data
+        element.data[formatKey] = {
+          ...element.data[formatKey],
+          ...formatData
+        };
+        
+        return;
+      }
+      
+      // For basic elements or if no field path, update normally
+      if (!fieldPath) {
+        // Update entire element format
+        element.data = {
+          ...element.data,
+          ...formatData
+        };
+        return;
+      }
+      
+      // Handle nested fields (e.g., testimonials.0.author)
+      // Split the path into parts
+      const pathParts = fieldPath.split('.');
+      let target = element.data;
+      
+      // Navigate to the parent object
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        const part = pathParts[i];
+        
+        if (!target[part]) {
+          // Create the path if it doesn't exist
+          if (!isNaN(Number(pathParts[i + 1]))) {
+            // If next part is a number, create an array
+            target[part] = [];
+          } else {
+            // Otherwise create an object
+            target[part] = {};
+          }
+        }
+        
+        target = target[part];
+      }
+      
+      // Get the final property name
+      const finalProp = pathParts[pathParts.length - 1];
+      
+      // Update the format data for this specific field
+      if (!target[finalProp + 'Format']) {
+        target[finalProp + 'Format'] = {};
+      }
+      
+      target[finalProp + 'Format'] = {
+        ...target[finalProp + 'Format'],
+        ...formatData
+      };
     }
-    
-    target = target[part];
-  }
-  
-  // Get the final property name
-  const finalProp = pathParts[pathParts.length - 1];
-  
-  // Update the format data for this specific field
-  if (!target[finalProp + 'Format']) {
-    target[finalProp + 'Format'] = {};
-  }
-  
-  target[finalProp + 'Format'] = {
-    ...target[finalProp + 'Format'],
-    ...formatData
-  };
-}
   },
   actions: {
     // Set the sidebar view
@@ -230,54 +189,55 @@ UPDATE_FIELD_FORMAT(state, { index, fieldPath, formatData }) {
       commit('SET_SIDEBAR_VIEW', 'layout');
     },
     
-    // FIXED: Improved method to update element data
-    // src/store/modules/page-builder.js - updateElementData action fix
-updateElementData({ commit, state }, updateData) {
-  if (state.selectedElementIndex === null) return;
-  
-  // Handle updating specific field within a section
-  if (updateData && updateData.activeField) {
-    const { elementData, activeField, formatProperty, formatValue } = updateData;
-    
-    // Update format data for the specific field
-    commit('UPDATE_FIELD_FORMAT', {
-      index: state.selectedElementIndex,
-      fieldPath: activeField.fieldPath,
-      formatData: { [formatProperty]: formatValue }
-    });
-    
-    return;
-  }
-  
-  // Handle regular element updates (for backward compatibility)
-  const element = state.canvasElements[state.selectedElementIndex];
-  let updatedData = updateData;
-  
-  // Special handling for section components
-  if (element.component === 'HeroSection' || element.component === 'TestimonialSection') {
-    // For section components, we need to merge the formatting properties with existing data
-    // rather than replacing the entire data object
-    updatedData = {
-      ...element.data,  // Keep all existing section data
+    updateElementData({ commit, state }, updateData) {
+      if (state.selectedElementIndex === null) return;
       
-      // Apply formatting properties if they exist in the new data
-      ...(updateData.fontSize && { fontSize: updateData.fontSize }),
-      ...(updateData.textAlign && { textAlign: updateData.textAlign }),
-      ...(updateData.isBold !== undefined && { isBold: updateData.isBold }),
-      ...(updateData.isItalic !== undefined && { isItalic: updateData.isItalic }),
-      ...(updateData.isUnderline !== undefined && { isUnderline: updateData.isUnderline }),
-      ...(updateData.textColor && { textColor: updateData.textColor }),
-      ...(updateData.lineHeight && { lineHeight: updateData.lineHeight }),
-      ...(updateData.letterSpacing && { letterSpacing: updateData.letterSpacing })
-    };
-  }
-  
-  // Update the element with either the new data or merged data
-  commit('UPDATE_CANVAS_ELEMENT', {
-    index: state.selectedElementIndex,
-    data: updatedData
-  });
-},
+      // Handle updating specific field within a section
+      if (updateData && updateData.activeField) {
+        const { elementData, activeField, formatProperty, formatValue } = updateData;
+        
+        // Update format data for the specific field
+        commit('UPDATE_FIELD_FORMAT', {
+          index: state.selectedElementIndex,
+          fieldPath: activeField.fieldPath,
+          formatData: { [formatProperty]: formatValue }
+        });
+        
+        return;
+      }
+      
+      // Handle regular element updates (for backward compatibility)
+      const element = state.canvasElements[state.selectedElementIndex];
+      let updatedData = updateData;
+      
+      // Special handling for section components
+      if (element.component === 'HeroSection' || 
+          element.component === 'TestimonialSection' || 
+          element.component === 'FeaturesSection' ||
+          element.component === 'AttentionBarSection') {
+        // For section components, we need to merge the formatting properties with existing data
+        // rather than replacing the entire data object
+        updatedData = {
+          ...element.data,  // Keep all existing section data
+          
+          // Apply formatting properties if they exist in the new data
+          ...(updateData.fontSize && { fontSize: updateData.fontSize }),
+          ...(updateData.textAlign && { textAlign: updateData.textAlign }),
+          ...(updateData.isBold !== undefined && { isBold: updateData.isBold }),
+          ...(updateData.isItalic !== undefined && { isItalic: updateData.isItalic }),
+          ...(updateData.isUnderline !== undefined && { isUnderline: updateData.isUnderline }),
+          ...(updateData.textColor && { textColor: updateData.textColor }),
+          ...(updateData.lineHeight && { lineHeight: updateData.lineHeight }),
+          ...(updateData.letterSpacing && { letterSpacing: updateData.letterSpacing })
+        };
+      }
+      
+      // Update the element with either the new data or merged data
+      commit('UPDATE_CANVAS_ELEMENT', {
+        index: state.selectedElementIndex,
+        data: updatedData
+      });
+    },
     
     // Show the secondary sidebar for a specific section type
     showSecondarySidebar({ commit }, sectionType) {
@@ -296,7 +256,6 @@ updateElementData({ commit, state }, updateData) {
       }, 300); // Match the CSS transition duration
     },
     
-    // FIXED: Improved method to add section template
     selectSectionTemplate({ commit, dispatch, state }, template) {
       let actualTemplate;
       
@@ -330,7 +289,6 @@ updateElementData({ commit, state }, updateData) {
       }
     },
     
-    // FIXED: Improved method to insert section template at a specific index
     insertSectionTemplateAtIndex({ commit, dispatch, state }, { template, index }) {
       let actualTemplate;
       
@@ -380,7 +338,6 @@ updateElementData({ commit, state }, updateData) {
       }
       return null;
     },
-    getAvailableElements: state => state.availableElements,
     getAvailableSections: state => state.availableSections,
     isSecondarySidebarVisible: state => state.showSecondarySidebar,
     getActiveSectionType: state => state.activeSectionType,

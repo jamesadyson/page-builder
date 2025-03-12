@@ -1,4 +1,4 @@
-// Update src/main.js to include the new FeaturesSection component
+// src/main.js
 
 import Vue from 'vue'
 import App from './App.vue'
@@ -13,11 +13,13 @@ import './components/icons'
 import TestimonialSection from './components/sections/TestimonialSection.vue'
 import HeroSection from './components/sections/HeroSection.vue'
 import FeaturesSection from './components/sections/FeaturesSection.vue'
+import AttentionBarSection from './components/sections/AttentionBarSection.vue'
 
 // Register global components
 Vue.component('TestimonialSection', TestimonialSection)
 Vue.component('HeroSection', HeroSection)
 Vue.component('FeaturesSection', FeaturesSection)
+Vue.component('AttentionBarSection', AttentionBarSection)
 
 Vue.config.productionTip = false
 
