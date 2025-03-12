@@ -4,15 +4,15 @@
       <div class="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
         <div class="flex items-center space-x-2">
           <button 
-            class="px-3 py-1.5 text-sm rounded hover:bg-gray-100 flex items-center"
-            @click="toggleSidebarView('layout')"
-            :class="{ 'bg-blue-100 text-blue-600': currentSidebarView === 'layout' }"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
-            Layout
-          </button>
+  class="px-3 py-1.5 text-sm rounded hover:bg-gray-100 flex items-center"
+  @click="showLayoutView"
+  :class="{ 'bg-blue-100 text-blue-600': currentSidebarView === 'layout' }"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+  </svg>
+  Layout
+</button>
           <button 
             class="px-3 py-1.5 text-sm rounded hover:bg-gray-100 flex items-center"
             @click="toggleSidebarView('elements')"
@@ -400,21 +400,26 @@
       ]),
   
       // FIXED: Improved toggle sidebar view method
-      toggleSidebarView(view) {
-        // First update the local state
-        this.currentSidebarView = view;
-        // Then sync with the store state
-        this.setSidebarView(view);
-        
-        if (view === 'elements') {
-          this.highlightSidebar();
-        }
+    // In src/components/PageBuilder.vue, find the toggleSidebarView method and replace it with this:
 
-        // For layout view, ensure we reset field selection
-        if (view === 'layout') {
-          this.activeFieldForEditing = null;
-        }
-      },
+    toggleSidebarView(view) {
+  // First update the local state
+  this.currentSidebarView = view;
+  // Then sync with the store state
+  this.setSidebarView(view);
+  
+  if (view === 'elements') {
+    this.highlightSidebar();
+  }
+
+  // For layout view, ensure we reset field selection
+  if (view === 'layout') {
+    this.activeFieldForEditing = null;
+    
+    // NOTE: We've removed the auto-deselect here
+    // The element remains selected, showing its settings panel
+  }
+},
       
       // Deselect the current element and go back to layout view
       deselectElement() {
@@ -671,27 +676,27 @@
       
       // FIXED: Improved method to properly handle selection from canvas elements
       selectElementFromCanvas(index) {
-        // First select the element in the store
-        this.selectElement(index);
-        
-        // Reset the active field selection since we're selecting the whole element
-        this.activeFieldForEditing = null;
-        
-        // Then explicitly switch to layout view to show settings
-        this.toggleSidebarView('layout');
-      },
+  // First select the element in the store
+  this.selectElement(index);
+  
+  // Reset the active field selection since we're selecting the whole element
+  this.activeFieldForEditing = null;
+  
+  // Then explicitly switch to layout view to show settings
+  this.toggleSidebarView('layout');
+},
       
       // NEW: Method to handle selection of a specific field within a section
       selectFieldFromCanvas(index, fieldInfo) {
-        // First select the element (section) in the store
-        this.selectElement(index);
-        
-        // Set the active field
-        this.activeFieldForEditing = fieldInfo;
-        
-        // Switch to layout view to show settings
-        this.toggleSidebarView('layout');
-      },
+  // First select the element (section) in the store
+  this.selectElement(index);
+  
+  // Set the active field
+  this.activeFieldForEditing = fieldInfo;
+  
+  // Switch to layout view to show settings
+  this.toggleSidebarView('layout');
+},
         
       // Improved drag and drop methods
       startDrag(event, index) {
@@ -714,6 +719,13 @@
         // Add dragging class to body
         document.body.classList.add('is-dragging');
       },
+
+      showLayoutView() {
+  // Always deselect the element when clicking the Layout button in the header
+  this.$store.commit('pageBuilder/SET_SELECTED_ELEMENT_INDEX', null);
+  this.activeFieldForEditing = null;
+  this.toggleSidebarView('layout');
+},
       
       // Handle mouse movement during drag
       handleDragMove(event) {

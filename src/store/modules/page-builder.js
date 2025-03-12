@@ -114,62 +114,85 @@ export default {
       state.sidebarView = view;
     },
     // NEW: Add field formatting metadata to a specific section field
-    UPDATE_FIELD_FORMAT(state, { index, fieldPath, formatData }) {
-      if (index === null || index >= state.canvasElements.length) return;
-      
-      const element = state.canvasElements[index];
-      
-      // Ensure element data exists
-      if (!element.data) {
-        element.data = {};
-      }
-      
-      // Get the target field and update its format data
-      if (fieldPath) {
-        // Split the path into parts (e.g., "testimonials.0.author" -> ["testimonials", "0", "author"])
-        const pathParts = fieldPath.split('.');
-        let target = element.data;
-        
-        // Navigate to the nested object, creating it if it doesn't exist
-        for (let i = 0; i < pathParts.length - 1; i++) {
-          const part = pathParts[i];
-          if (!target[part]) {
-            if (!isNaN(Number(pathParts[i + 1]))) {
-              // If the next part is a number, create an array
-              target[part] = [];
-            } else {
-              // Otherwise create an object
-              target[part] = {};
-            }
-          }
-          target = target[part];
-        }
-        
-        // Get the final property name
-        const finalProp = pathParts[pathParts.length - 1];
-        
-        // If the target is a string/primitive value, convert it to an object with value and format
-        if (target[finalProp] && typeof target[finalProp] !== 'object') {
-          const originalValue = target[finalProp];
-          target[finalProp] = {
-            value: originalValue,
-            format: formatData
-          };
-        } else if (!target[finalProp]) {
-          // If the property doesn't exist, create it with format
-          target[finalProp] = {
-            value: '',
-            format: formatData
-          };
-        } else if (target[finalProp] && typeof target[finalProp] === 'object') {
-          // If it's already an object, add or update the format property
-          target[finalProp].format = { ...target[finalProp].format, ...formatData };
-        }
+    // In src/store/modules/page-builder.js, update the UPDATE_FIELD_FORMAT mutation
+// to ensure it correctly adds format data to sections:
+
+// Find and review this mutation:
+UPDATE_FIELD_FORMAT(state, { index, fieldPath, formatData }) {
+  if (index === null || index >= state.canvasElements.length) return;
+  
+  const element = state.canvasElements[index];
+  
+  // Ensure element data exists
+  if (!element.data) {
+    element.data = {};
+  }
+  
+  // For section components, we need to store format data differently
+  if (element.component === 'HeroSection' || element.component === 'TestimonialSection') {
+    // For Hero and Testimonial sections, store format under fieldNameFormat
+    const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
+    
+    // Initialize or update the format object
+    if (!element.data[formatKey]) {
+      element.data[formatKey] = {};
+    }
+    
+    // Update with new format data
+    element.data[formatKey] = {
+      ...element.data[formatKey],
+      ...formatData
+    };
+    
+    return;
+  }
+  
+  // For basic elements or if no field path, update normally
+  if (!fieldPath) {
+    // Update entire element format
+    element.data = {
+      ...element.data,
+      ...formatData
+    };
+    return;
+  }
+  
+  // Handle nested fields (e.g., testimonials.0.author)
+  // Split the path into parts
+  const pathParts = fieldPath.split('.');
+  let target = element.data;
+  
+  // Navigate to the parent object
+  for (let i = 0; i < pathParts.length - 1; i++) {
+    const part = pathParts[i];
+    
+    if (!target[part]) {
+      // Create the path if it doesn't exist
+      if (!isNaN(Number(pathParts[i + 1]))) {
+        // If next part is a number, create an array
+        target[part] = [];
       } else {
-        // If no field path is provided, update the entire element's format data
-        element.data = { ...element.data, ...formatData };
+        // Otherwise create an object
+        target[part] = {};
       }
     }
+    
+    target = target[part];
+  }
+  
+  // Get the final property name
+  const finalProp = pathParts[pathParts.length - 1];
+  
+  // Update the format data for this specific field
+  if (!target[finalProp + 'Format']) {
+    target[finalProp + 'Format'] = {};
+  }
+  
+  target[finalProp + 'Format'] = {
+    ...target[finalProp + 'Format'],
+    ...formatData
+  };
+}
   },
   actions: {
     // Set the sidebar view

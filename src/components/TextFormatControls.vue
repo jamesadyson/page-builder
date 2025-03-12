@@ -422,28 +422,28 @@ export default {
     
     // Central method to update format properties
     updateFormatProperty(property, value) {
-      // Prepare the update object
-      let updateData;
-      
-      if (this.activeField) {
-        // For a specific field in a section
-        updateData = {
-          elementData: this.elementData,
-          activeField: this.activeField,
-          formatProperty: property,
-          formatValue: value
-        };
-      } else {
-        // For regular elements or section-wide changes
-        const formatData = { ...this.fieldFormatData };
-        formatData[property] = value;
-        
-        updateData = formatData;
-      }
-      
-      // Update via parent component
-      this.$emit('update', updateData);
-    },
+  // Prepare the update object
+  let updateData;
+  
+  if (this.activeField) {
+    // For a specific field in a section
+    updateData = {
+      elementData: this.elementData,
+      activeField: this.activeField,
+      formatProperty: property,
+      formatValue: value
+    };
+  } else {
+    // For regular elements or section-wide changes
+    const formatData = { ...this.fieldFormatData };
+    formatData[property] = value;
+    
+    updateData = formatData;
+  }
+  
+  // Update via parent component
+  this.$emit('update', updateData);
+},
     
     // Helper labels and status methods
     getLineHeightLabel() {

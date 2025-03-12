@@ -23,7 +23,8 @@
           @blur="updateSubheading"
           @focus="selectField('subheading')"
           @click.stop="selectField('subheading')"
-          :class="getFieldClasses('subheading')">
+          :class="getFieldClasses('subheading')"
+          :style="getFieldStyles('subheading')">
           {{ sectionData.subheading }}
         </p>
         <h2 
@@ -32,7 +33,8 @@
           @blur="updateHeading"
           @focus="selectField('heading')"
           @click.stop="selectField('heading')"
-          :class="getFieldClasses('heading')">
+          :class="getFieldClasses('heading')"
+          :style="getFieldStyles('heading')">
           {{ sectionData.heading }}
         </h2>
         <div class="flex flex-wrap -m-8">
@@ -53,7 +55,8 @@
                     @blur="updateTestimonial(0, 'author')"
                     @focus="selectField('testimonials.0.author')"
                     @click.stop="selectField('testimonials.0.author')"
-                    :class="getFieldClasses('testimonials.0.author')">
+                    :class="getFieldClasses('testimonials.0.author')"
+                    :style="getFieldStyles('testimonials.0.author')">
                     {{ sectionData.testimonials[0].author }}
                   </h3>
                   <p 
@@ -62,7 +65,8 @@
                     @blur="updateTestimonial(0, 'handle')"
                     @focus="selectField('testimonials.0.handle')"
                     @click.stop="selectField('testimonials.0.handle')"
-                    :class="getFieldClasses('testimonials.0.handle')">
+                    :class="getFieldClasses('testimonials.0.handle')"
+                    :style="getFieldStyles('testimonials.0.handle')">
                     {{ sectionData.testimonials[0].handle }}
                   </p>
                 </div>
@@ -73,7 +77,8 @@
                 @blur="updateTestimonial(0, 'quote')"
                 @focus="selectField('testimonials.0.quote')"
                 @click.stop="selectField('testimonials.0.quote')"
-                :class="getFieldClasses('testimonials.0.quote')">
+                :class="getFieldClasses('testimonials.0.quote')"
+                :style="getFieldStyles('testimonials.0.quote')">
                 {{ sectionData.testimonials[0].quote }}
               </p>
               <div class="h-8 flex items-center justify-center">
@@ -83,7 +88,8 @@
                   @blur="updateTestimonial(0, 'company')"
                   @focus="selectField('testimonials.0.company')"
                   @click.stop="selectField('testimonials.0.company')"
-                  :class="getFieldClasses('testimonials.0.company')">
+                  :class="getFieldClasses('testimonials.0.company')"
+                  :style="getFieldStyles('testimonials.0.company')">
                   {{ sectionData.testimonials[0].company }}
                 </span>
               </div>
@@ -109,7 +115,8 @@
                     @blur="updateTestimonial(1, 'author')"
                     @focus="selectField('testimonials.1.author')"
                     @click.stop="selectField('testimonials.1.author')"
-                    :class="getFieldClasses('testimonials.1.author')">
+                    :class="getFieldClasses('testimonials.1.author')"
+                    :style="getFieldStyles('testimonials.1.author')">
                     {{ sectionData.testimonials[1].author }}
                   </h3>
                   <p 
@@ -118,7 +125,8 @@
                     @blur="updateTestimonial(1, 'handle')"
                     @focus="selectField('testimonials.1.handle')"
                     @click.stop="selectField('testimonials.1.handle')"
-                    :class="getFieldClasses('testimonials.1.handle')">
+                    :class="getFieldClasses('testimonials.1.handle')"
+                    :style="getFieldStyles('testimonials.1.handle')">
                     {{ sectionData.testimonials[1].handle }}
                   </p>
                 </div>
@@ -129,7 +137,8 @@
                 @blur="updateTestimonial(1, 'quote')"
                 @focus="selectField('testimonials.1.quote')"
                 @click.stop="selectField('testimonials.1.quote')"
-                :class="getFieldClasses('testimonials.1.quote')">
+                :class="getFieldClasses('testimonials.1.quote')"
+                :style="getFieldStyles('testimonials.1.quote')">
                 {{ sectionData.testimonials[1].quote }}
               </p>
               <div class="h-8 flex items-center justify-center">
@@ -139,7 +148,8 @@
                   @blur="updateTestimonial(1, 'company')"
                   @focus="selectField('testimonials.1.company')"
                   @click.stop="selectField('testimonials.1.company')"
-                  :class="getFieldClasses('testimonials.1.company')">
+                  :class="getFieldClasses('testimonials.1.company')"
+                  :style="getFieldStyles('testimonials.1.company')">
                   {{ sectionData.testimonials[1].company }}
                 </span>
               </div>
@@ -172,7 +182,7 @@ export default {
       this.selectedField = null;
     },
     
-    // NEW: Field-specific selection method
+    // Field-specific selection method
     selectField(fieldPath) {
       this.selectedField = fieldPath;
       
@@ -191,7 +201,7 @@ export default {
       return parts[parts.length - 1];
     },
     
-    // NEW: Get any format overrides for a specific field
+    // Get any format overrides for a specific field
     getFieldFormatOverrides(fieldPath) {
       // If the section has field-specific format data, return it
       const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
@@ -245,12 +255,42 @@ export default {
       return defaults[fieldPath] || {};
     },
     
-    // Helper to get dynamic classes for a field based on selection state
+    // NEW: Updated getFieldClasses to include format classes
     getFieldClasses(fieldPath) {
-      return {
+      // Start with basic selection classes
+      const classes = {
         'field-selected': this.selectedField === fieldPath,
         'field-editable': true
       };
+      
+      // Add format classes from section data
+      const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
+      if (this.sectionData[formatKey]) {
+        const format = this.sectionData[formatKey];
+        // Add each format class if available
+        if (format.fontSize) classes[format.fontSize] = true;
+        if (format.textAlign) classes['text-' + format.textAlign] = true;
+        if (format.isBold) classes['font-bold'] = true;
+        if (format.isItalic) classes['italic'] = true;
+        if (format.isUnderline) classes['underline'] = true;
+        if (format.lineHeight) classes[format.lineHeight] = true;
+        if (format.letterSpacing) classes[format.letterSpacing] = true;
+      }
+      
+      return classes;
+    },
+    
+    // NEW: Add method to get inline styles for text color
+    getFieldStyles(fieldPath) {
+      const styles = {};
+      
+      // Add text color if available
+      const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
+      if (this.sectionData[formatKey] && this.sectionData[formatKey].textColor) {
+        styles.color = this.sectionData[formatKey].textColor;
+      }
+      
+      return styles;
     },
     
     // Update methods for each field

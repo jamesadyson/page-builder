@@ -22,7 +22,8 @@
           @blur="updateSubheading"
           @focus="selectField('subheading')"
           @click.stop="selectField('subheading')"
-          :class="getFieldClasses('subheading')">
+          :class="getFieldClasses('subheading')"
+          :style="getFieldStyles('subheading')">
           {{ sectionData.subheading }}
         </p>
         <div class="text-center max-w-6xl mx-auto">
@@ -32,7 +33,8 @@
             @blur="updateHeading"
             @focus="selectField('heading')"
             @click.stop="selectField('heading')"
-            :class="getFieldClasses('heading')">
+            :class="getFieldClasses('heading')"
+            :style="getFieldStyles('heading')">
             {{ sectionData.heading }}
           </h2>
           <p 
@@ -41,7 +43,8 @@
             @blur="updateDescription"
             @focus="selectField('description')"
             @click.stop="selectField('description')"
-            :class="getFieldClasses('description')">
+            :class="getFieldClasses('description')"
+            :style="getFieldStyles('description')">
             {{ sectionData.description }}
           </p>
           
@@ -65,7 +68,8 @@
                 contenteditable="true" 
                 @blur="updateButtonText"
                 @focus="selectField('buttonText')"
-                :class="getFieldClasses('buttonText')">
+                :class="getFieldClasses('buttonText')"
+                :style="getFieldStyles('buttonText')">
                 {{ sectionData.buttonText }}
               </span>
             </button>
@@ -77,7 +81,8 @@
             @blur="updateDisclaimerText"
             @focus="selectField('disclaimerText')"
             @click.stop="selectField('disclaimerText')"
-            :class="getFieldClasses('disclaimerText')">
+            :class="getFieldClasses('disclaimerText')"
+            :style="getFieldStyles('disclaimerText')">
             {{ sectionData.disclaimerText }}
           </p>
           
@@ -87,7 +92,8 @@
                 contenteditable="true" 
                 @blur="updateNoThanksText"
                 @focus="selectField('noThanksText')"
-                :class="getFieldClasses('noThanksText')">
+                :class="getFieldClasses('noThanksText')"
+                :style="getFieldStyles('noThanksText')">
                 {{ sectionData.noThanksText }}
               </span>
             </button>
@@ -119,7 +125,7 @@ export default {
       this.selectedField = null;
     },
     
-    // NEW: Field-specific selection method
+    // Field-specific selection method
     selectField(fieldName) {
       this.selectedField = fieldName;
       
@@ -132,7 +138,7 @@ export default {
       });
     },
     
-    // NEW: Get any format overrides for a specific field
+    // Get any format overrides for a specific field
     getFieldFormatOverrides(fieldName) {
       // If the section has field-specific format data, return it
       if (this.sectionData[`${fieldName}Format`]) {
@@ -162,12 +168,42 @@ export default {
       return defaults[fieldName] || {};
     },
     
-    // Helper to get dynamic classes for a field based on selection state
+    // NEW: Updated getFieldClasses to include format classes
     getFieldClasses(fieldName) {
-      return {
+      // Start with basic selection classes
+      const classes = {
         'field-selected': this.selectedField === fieldName,
         'field-editable': true
       };
+      
+      // Add format classes from section data
+      const formatKey = fieldName + 'Format';
+      if (this.sectionData[formatKey]) {
+        const format = this.sectionData[formatKey];
+        // Add each format class if available
+        if (format.fontSize) classes[format.fontSize] = true;
+        if (format.textAlign) classes['text-' + format.textAlign] = true;
+        if (format.isBold) classes['font-bold'] = true;
+        if (format.isItalic) classes['italic'] = true;
+        if (format.isUnderline) classes['underline'] = true;
+        if (format.lineHeight) classes[format.lineHeight] = true;
+        if (format.letterSpacing) classes[format.letterSpacing] = true;
+      }
+      
+      return classes;
+    },
+    
+    // NEW: Add method to get inline styles for text color
+    getFieldStyles(fieldName) {
+      const styles = {};
+      
+      // Add text color if available
+      const formatKey = fieldName + 'Format';
+      if (this.sectionData[formatKey] && this.sectionData[formatKey].textColor) {
+        styles.color = this.sectionData[formatKey].textColor;
+      }
+      
+      return styles;
     },
     
     // Update methods for each field
