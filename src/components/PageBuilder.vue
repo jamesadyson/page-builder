@@ -33,13 +33,13 @@
     
 <!-- Main content area -->
     <div class="flex flex-1 overflow-hidden">
-      <!-- Left Sidebar without the title and navigation buttons -->
+      <!-- Left Sidebar that conditionally shows layout, elements, or text editor -->
       <div 
         class="w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto relative"
         :class="{ 'sidebar-highlight': sidebarHighlighted }"
       >
         <!-- Layout View - Shows sections already added to the page -->
-        <div v-if="currentSidebarView === 'layout'">
+        <div v-if="currentSidebarView === 'layout' && selectedElementIndex === null">
           <div class="p-4">
             <div v-if="canvasElements.length === 0" class="text-center py-8">
               <p class="text-gray-500 mb-4">No sections added to your page yet</p>
@@ -60,7 +60,7 @@
                 :key="'layout-' + index"
                 class="border border-gray-200 rounded p-3 hover:border-blue-300 transition-colors cursor-pointer"
                 :class="{ 'border-blue-500 bg-blue-50': selectedElementIndex === index }"
-                @click="selectElementFromCanvas(index)"
+                @click="selectElementAndScroll(index)"
               >
                 <div class="flex items-center justify-between">
                   <!-- Section title based on component type -->
@@ -171,6 +171,21 @@
             />
           </div>
         </div>
+
+        <!-- Element Settings - In the left sidebar when an element is selected -->
+        <div v-if="selectedElementIndex !== null && currentSidebarView === 'layout'" class="p-4">
+          <div class="border-b border-gray-200 pb-4 mb-4">
+            <h2 class="text-lg font-medium text-gray-800">Element Settings</h2>
+            <p class="text-sm text-gray-500">{{ getSectionName(canvasElements[selectedElementIndex], selectedElementIndex) }}</p>
+          </div>
+          
+          <!-- Element specific settings -->
+          <TextFormatControls 
+            v-if="isTextElement()"
+            :element-data="canvasElements[selectedElementIndex].data"
+            @update="updateElementData"
+          />
+        </div>
       </div>
 
       <!-- Main Canvas Area - now without its own header -->
@@ -219,6 +234,7 @@
                 :key="index"
                 class="element-wrapper relative"
                 :class="{'opacity-50': isDragging && draggedElementIndex === index}"
+                :ref="'element-' + index"
               >
                 <!-- The actual element component -->
                 <component
@@ -267,24 +283,6 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Footer -->
-
-      </div>
-
-      <!-- Right Sidebar for Options -->
-      <div v-if="selectedElementIndex !== null" class="w-64 bg-white border-l border-gray-200 shadow-sm overflow-y-auto">
-        <div class="p-4 border-b border-gray-200">
-          <h2 class="text-lg font-medium text-gray-800">Element Settings</h2>
-        </div>
-        <div class="p-4">
-          <!-- Element specific settings -->
-          <TextFormatControls 
-            v-if="isTextElement()"
-            :element-data="canvasElements[selectedElementIndex].data"
-            @update="updateElementData"
-          />
         </div>
       </div>
       
@@ -389,6 +387,35 @@ export default {
       this.currentSidebarView = view;
       if (view === 'elements') {
         this.highlightSidebar();
+      }
+    },
+    
+    // Deselect the current element and go back to layout view
+    deselectElement() {
+      this.$store.commit('pageBuilder/SET_SELECTED_ELEMENT_INDEX', null);
+      this.currentSidebarView = 'layout';
+    },
+    
+    // Select an element and scroll to it in the canvas
+    selectElementAndScroll(index) {
+      this.selectElement(index);
+      this.$nextTick(() => {
+        this.scrollToElement(index);
+      });
+    },
+    
+    // Scroll to a specific element
+    scrollToElement(index) {
+      const elementRef = this.$refs[`element-${index}`];
+      if (elementRef && elementRef[0]) {
+        const canvasEl = this.$refs.canvasArea;
+        const element = elementRef[0];
+        
+        // Scroll with smooth behavior
+        canvasEl.scrollTo({
+          top: element.offsetTop - 100, // Offset to show some content above
+          behavior: 'smooth'
+        });
       }
     },
     
@@ -558,8 +585,21 @@ export default {
     isTextElement() {
       if (this.selectedElementIndex === null) return false;
       
-      const componentName = this.canvasElements[this.selectedElementIndex].component;
-      return ['TextElement', 'HeadingElement', 'BulletElement'].includes(componentName);
+      const element = this.canvasElements[this.selectedElementIndex];
+      const componentName = element.component;
+      
+      // Check for basic text elements
+      if (['TextElement', 'HeadingElement', 'BulletElement', 'FeatureElement'].includes(componentName)) {
+        return true;
+      }
+      
+      // Check for section elements that contain text (like Hero or Testimonial sections)
+      // These have text-based properties in their data object
+      if (componentName === 'HeroSection' || componentName === 'TestimonialSection') {
+        return true;
+      }
+      
+      return false;
     },
     
     // Helper for getting element name for drag ghost
@@ -577,6 +617,9 @@ export default {
     
     selectElementFromCanvas(index) {
       this.selectElement(index);
+      // Always switch to 'layout' view when element is selected
+      // The element settings will be shown in the left sidebar
+      this.currentSidebarView = 'layout';
     },
       
     // Improved drag and drop methods
