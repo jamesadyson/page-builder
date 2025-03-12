@@ -50,6 +50,7 @@ export default {
     },
     availableSections: [
       { name: 'Hero', icon: 'HeroIcon', type: 'hero' },
+      { name: 'Features', icon: 'FeaturesIcon', type: 'features' },
       { name: 'Product', icon: 'ProductIcon', type: 'product' },
       { name: 'Call to action', icon: 'CtaIcon', type: 'callToAction' },
       { name: 'About us', icon: 'AboutIcon', type: 'aboutUs' },

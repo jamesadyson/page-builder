@@ -96,6 +96,41 @@ hero: [
     }
   }
 ],
+
+features: [
+  {
+    id: 'features-checklist',
+    name: 'Features Checklist',
+    thumbnail: '/thumbnails/features-checklist.jpg',
+    component: 'FeaturesSection',
+    data: {
+      heading: 'Everything that\'s included in this special offer',
+      subheading: 'Here\'s just a small sample of what you\'ll be getting with this special upgrade',
+      features: [
+        {
+          title: 'Profitable Course Idea Formula ($599 Value)',
+          description: 'How to validate your course ideas quickly, ensuring market demand and profitability before you invest time and money.'
+        },
+        {
+          title: 'Simple Course Creation Blueprint ($299 Value)',
+          description: 'A step-by-step guide to planning, structuring, and recording high-quality lessons that your audience will love—even if you\'re new to teaching.'
+        },
+        {
+          title: 'Tech Made Easy ($99 Value)',
+          description: 'Clear, jargon-free walkthroughs on choosing the right tech stack, including platforms, software, and video hosting, without feeling overwhelmed.'
+        },
+        {
+          title: 'Pricing and Selling Strategies 2.0 ($99 Value)',
+          description: 'Proven pricing models and sales techniques that boost your course\'s value, attract the right audience, and increase your revenue potential.'
+        },
+        {
+          title: 'Effortless Course Marketing ($99 Value)',
+          description: 'Practical marketing methods to build your audience, drive enrolments, and launch successfully, even without a large following or marketing experience.'
+        }
+      ]
+    }
+  }
+],
     callToAction: [
       // CTA section templates will go here
     ],

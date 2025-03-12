@@ -449,6 +449,38 @@ const TrustIcon = {
   }
 };
 
+const FeaturesIcon = {
+  functional: true,
+  render(h) {
+    return h('svg', {
+      attrs: {
+        xmlns: 'http://www.w3.org/2000/svg',
+        viewBox: '0 0 24 24',
+        fill: 'none',
+        stroke: 'currentColor',
+        'stroke-width': '2',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round'
+      },
+      class: 'h-5 w-5'
+    }, [
+      h('path', {
+        attrs: {
+          d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14'
+        }
+      }),
+      h('polyline', {
+        attrs: {
+          points: '22 4 12 14.01 9 11.01'
+        }
+      })
+    ]);
+  }
+};
+
+// Then register the component
+Vue.component('FeaturesIcon', FeaturesIcon);
+
 // Register all icons as global components
 Vue.component('HeadingIcon', HeadingIcon);
 Vue.component('TextIcon', TextIcon);

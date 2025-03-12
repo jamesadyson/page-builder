@@ -595,36 +595,36 @@
       
       // Section hover methods
       handleSectionHover(sectionType) {
-        this.currentHoveredSection = sectionType;
-        this.isMouseOverSectionItem = true;
-        
-        // Clear any existing timeout
-        if (this.hoverTimeout) {
-          clearTimeout(this.hoverTimeout);
-        }
-        
-        // Clear close timeout if exists
-        if (this.closeSidebarTimeout) {
-          clearTimeout(this.closeSidebarTimeout);
-          this.closeSidebarTimeout = null;
-        }
-        
-        // Set a new timeout to show the secondary sidebar
-        this.hoverTimeout = setTimeout(() => {
-          if (sectionType === 'testimonials' || sectionType === 'hero') {
-            this.toggleSecondarySidebar(true, sectionType);
-          }
-        }, this.hoverDelay);
-      },
+  this.currentHoveredSection = sectionType;
+  this.isMouseOverSectionItem = true;
+  
+  // Clear any existing timeout
+  if (this.hoverTimeout) {
+    clearTimeout(this.hoverTimeout);
+  }
+  
+  // Clear close timeout if exists
+  if (this.closeSidebarTimeout) {
+    clearTimeout(this.closeSidebarTimeout);
+    this.closeSidebarTimeout = null;
+  }
+  
+  // Set a new timeout to show the secondary sidebar
+  this.hoverTimeout = setTimeout(() => {
+    if (sectionType === 'testimonials' || sectionType === 'hero' || sectionType === 'features') {
+      this.toggleSecondarySidebar(true, sectionType);
+    }
+  }, this.hoverDelay);
+},
       
       selectSection(section) {
-        // If we have templates for this section type, show them
-        if (section.type === 'testimonials' || section.type === 'hero') {
-          this.toggleSecondarySidebar(true, section.type);
-        } else {
-          console.log(`Selected section: ${section.name}`);
-        }
-      },
+  // If we have templates for this section type, show them
+  if (section.type === 'testimonials' || section.type === 'hero' || section.type === 'features') {
+    this.toggleSecondarySidebar(true, section.type);
+  } else {
+    console.log(`Selected section: ${section.name}`);
+  }
+},
       
       // IMPROVED: Helper method for Element Settings panel with better type checking
       isTextElement() {
