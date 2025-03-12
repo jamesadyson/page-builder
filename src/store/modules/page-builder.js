@@ -58,7 +58,8 @@ export default {
       { name: 'Testimonials', icon: 'TestimonialsIcon', type: 'testimonials' },
       { name: 'Trust', icon: 'TrustIcon', type: 'trust' }
     ],
-    sectionTemplates
+    sectionTemplates,
+    sidebarView: 'layout', // New property to track the current sidebar view
   },
   mutations: {
     ADD_CANVAS_ELEMENT(state, element) {
@@ -108,9 +109,17 @@ export default {
     },
     SET_CANVAS_ELEMENTS(state, elements) {
       state.canvasElements = elements;
+    },
+    SET_SIDEBAR_VIEW(state, view) {
+      state.sidebarView = view;
     }
   },
   actions: {
+    // Set the sidebar view
+    setSidebarView({ commit }, view) {
+      commit('SET_SIDEBAR_VIEW', view);
+    },
+    
     // Insert an element at a specific index
     insertElementAtIndex({ commit }, { element, index }) {
       commit('INSERT_CANVAS_ELEMENT', { element, index });
@@ -181,6 +190,9 @@ export default {
       
       // Hide the secondary sidebar
       dispatch('hideSecondarySidebar');
+      
+      // Change sidebar view to layout
+      commit('SET_SIDEBAR_VIEW', 'layout');
     },
     
     // Insert a section template at a specific index
@@ -209,6 +221,9 @@ export default {
       
       // Hide the secondary sidebar
       dispatch('hideSecondarySidebar');
+      
+      // Change sidebar view to layout
+      commit('SET_SIDEBAR_VIEW', 'layout');
     },
     
     // Set the entire canvas elements array
@@ -233,6 +248,7 @@ export default {
         return [];
       }
       return state.sectionTemplates[state.activeSectionType];
-    }
+    },
+    getCurrentSidebarView: state => state.sidebarView
   }
 };
