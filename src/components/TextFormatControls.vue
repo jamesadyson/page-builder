@@ -8,7 +8,7 @@
           v-for="size in ['XS', 'S', 'M', 'L', 'XL']" 
           :key="size"
           class="flex-1 py-2 px-3 rounded-md text-center transition-colors"
-          :class="[elementData.fontSize === sizeMap[size] ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
+          :class="[formattableData.fontSize === sizeMap[size] ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
           @click="updateFontSize(sizeMap[size])">
           {{ size }}
         </button>
@@ -24,7 +24,7 @@
             v-for="(label, value) in advancedSizes" 
             :key="value"
             class="py-1 px-2 text-sm rounded hover:bg-gray-100 text-center"
-            :class="[elementData.fontSize === value ? 'bg-blue-50 text-blue-500' : 'text-gray-700']"
+            :class="[formattableData.fontSize === value ? 'bg-blue-50 text-blue-500' : 'text-gray-700']"
             @click="updateFontSize(value)">
             {{ label }}
           </button>
@@ -51,7 +51,7 @@
             v-for="(label, value) in lineHeights" 
             :key="value"
             class="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 transition-colors"
-            :class="[elementData.lineHeight === value ? 'bg-blue-50 text-blue-500' : 'text-gray-700']"
+            :class="[formattableData.lineHeight === value ? 'bg-blue-50 text-blue-500' : 'text-gray-700']"
             @click="updateLineHeight(value)">
             {{ label }}
           </button>
@@ -78,7 +78,7 @@
             v-for="(label, value) in letterSpacings" 
             :key="value"
             class="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 transition-colors"
-            :class="[elementData.letterSpacing === value ? 'bg-blue-50 text-blue-500' : 'text-gray-700']"
+            :class="[formattableData.letterSpacing === value ? 'bg-blue-50 text-blue-500' : 'text-gray-700']"
             @click="updateLetterSpacing(value)">
             {{ label }}
           </button>
@@ -91,19 +91,19 @@
       <div class="flex items-center bg-gray-100 rounded-lg p-1">
         <button 
           class="flex-1 py-2 px-3 rounded-md text-center transition-colors"
-          :class="[elementData.isBold ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
+          :class="[formattableData.isBold ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
           @click="toggleBold()">
           <span class="font-bold">B</span>
         </button>
         <button 
           class="flex-1 py-2 px-3 rounded-md text-center transition-colors"
-          :class="[elementData.isItalic ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
+          :class="[formattableData.isItalic ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
           @click="toggleItalic()">
           <span class="italic">I</span>
         </button>
         <button 
           class="flex-1 py-2 px-3 rounded-md text-center transition-colors"
-          :class="[elementData.isUnderline ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
+          :class="[formattableData.isUnderline ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
           @click="toggleUnderline()">
           <span class="underline">U</span>
         </button>
@@ -116,7 +116,7 @@
       <div class="flex items-center bg-gray-100 rounded-lg p-1">
         <button 
           class="flex-1 py-2 px-3 rounded-md flex justify-center transition-colors"
-          :class="[elementData.textAlign === 'left' ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
+          :class="[formattableData.textAlign === 'left' ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
           @click="updateAlignment('left')">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h16" />
@@ -124,7 +124,7 @@
         </button>
         <button 
           class="flex-1 py-2 px-3 rounded-md flex justify-center transition-colors"
-          :class="[elementData.textAlign === 'center' ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
+          :class="[formattableData.textAlign === 'center' ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
           @click="updateAlignment('center')">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M4 18h16" />
@@ -132,7 +132,7 @@
         </button>
         <button 
           class="flex-1 py-2 px-3 rounded-md flex justify-center transition-colors"
-          :class="[elementData.textAlign === 'right' ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
+          :class="[formattableData.textAlign === 'right' ? 'bg-white text-blue-500 shadow-sm' : 'text-gray-500 hover:bg-gray-200']"
           @click="updateAlignment('right')">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M4 18h16" />
@@ -149,7 +149,7 @@
           class="w-full flex items-center justify-between bg-gray-100 rounded-lg p-3 hover:bg-gray-200"
           @click="showColorPicker = !showColorPicker">
           <span>Select color</span>
-          <div class="h-6 w-6 rounded-full border border-gray-300" :style="{ backgroundColor: elementData.textColor }"></div>
+          <div class="h-6 w-6 rounded-full border border-gray-300" :style="{ backgroundColor: formattableData.textColor }"></div>
         </button>
         
         <!-- Color Picker Dropdown -->
@@ -234,46 +234,95 @@ export default {
       ]
     };
   },
+  computed: {
+    // FIXED: Get the appropriate data object based on component type
+    formattableData() {
+      // Handle sections differently from basic elements
+      if (!this.elementData) return {};
+      
+      // Basic elements already have the right structure
+      if (this.elementData.fontSize !== undefined || 
+          this.elementData.textAlign !== undefined ||
+          this.elementData.isBold !== undefined) {
+        return this.elementData;
+      }
+      
+      // For section elements, we need to adapt them
+      // This is a simplified version - you may need to extend this
+      // based on which specific field within the section is being edited
+      const sectionDefaults = {
+        fontSize: 'text-base',
+        textAlign: 'left',
+        isBold: false,
+        isItalic: false,
+        isUnderline: false,
+        textColor: '#000000',
+        lineHeight: 'leading-normal',
+        letterSpacing: 'tracking-normal'
+      };
+      
+      // Merge with section data
+      return { ...sectionDefaults, ...this.elementData };
+    }
+  },
   methods: {
+    // FIXED: All methods now use formattableData instead of directly accessing elementData
     updateFontSize(size) {
-      this.$emit('update', { ...this.elementData, fontSize: size });
+      const updatedData = { ...this.formattableData, fontSize: size };
+      this.$emit('update', updatedData);
       this.showAdvancedSizes = false;
     },
+    
     toggleBold() {
-      this.$emit('update', { ...this.elementData, isBold: !this.elementData.isBold });
+      const updatedData = { ...this.formattableData, isBold: !this.formattableData.isBold };
+      this.$emit('update', updatedData);
     },
+    
     toggleItalic() {
-      this.$emit('update', { ...this.elementData, isItalic: !this.elementData.isItalic });
+      const updatedData = { ...this.formattableData, isItalic: !this.formattableData.isItalic };
+      this.$emit('update', updatedData);
     },
+    
     toggleUnderline() {
-      this.$emit('update', { ...this.elementData, isUnderline: !this.elementData.isUnderline });
+      const updatedData = { ...this.formattableData, isUnderline: !this.formattableData.isUnderline };
+      this.$emit('update', updatedData);
     },
+    
     updateAlignment(align) {
-      this.$emit('update', { ...this.elementData, textAlign: align });
+      const updatedData = { ...this.formattableData, textAlign: align };
+      this.$emit('update', updatedData);
     },
+    
     updateTextColor(color) {
-      this.$emit('update', { ...this.elementData, textColor: color });
+      const updatedData = { ...this.formattableData, textColor: color };
+      this.$emit('update', updatedData);
       this.showColorPicker = false;
     },
+    
     updateLineHeight(lineHeight) {
-      this.$emit('update', { ...this.elementData, lineHeight });
+      const updatedData = { ...this.formattableData, lineHeight };
+      this.$emit('update', updatedData);
       this.showLineHeightDropdown = false;
     },
+    
     updateLetterSpacing(letterSpacing) {
-      this.$emit('update', { ...this.elementData, letterSpacing });
+      const updatedData = { ...this.formattableData, letterSpacing };
+      this.$emit('update', updatedData);
       this.showLetterSpacingDropdown = false;
     },
+    
     getLineHeightLabel() {
-      if (!this.elementData.lineHeight) {
+      if (!this.formattableData.lineHeight) {
         return 'Default';
       }
-      return this.lineHeights[this.elementData.lineHeight] || 'Default';
+      return this.lineHeights[this.formattableData.lineHeight] || 'Default';
     },
+    
     getLetterSpacingLabel() {
-      if (!this.elementData.letterSpacing) {
+      if (!this.formattableData.letterSpacing) {
         return 'Default';
       }
-      return this.letterSpacings[this.elementData.letterSpacing] || 'Default';
+      return this.letterSpacings[this.formattableData.letterSpacing] || 'Default';
     }
   }
 };

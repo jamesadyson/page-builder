@@ -14,19 +14,21 @@
       </button>
     </div>
     
-    <section class="relative pt-24 pb-32 bg-white overflow-hidden group" @click="selectSection">
+    <section class="relative pt-24 pb-32 bg-white overflow-hidden group" @click.stop="selectSection">
       <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-50 opacity-50 w-[500px] h-[500px] rounded-full"></div>
       <div class="relative z-10 container px-4 mx-auto">
         <p 
           class="mb-4 text-lg text-gray-900 font-medium text-center"
           contenteditable="true"
-          @blur="updateSubheading">
+          @blur="updateSubheading"
+          @click.stop="selectSection">
           {{ sectionData.subheading }}
         </p>
         <h2 
           class="mb-24 text-4xl md:text-5xl font-bold text-center tracking-tight leading-tight"
           contenteditable="true"
-          @blur="updateHeading">
+          @blur="updateHeading"
+          @click.stop="selectSection">
           {{ sectionData.heading }}
         </h2>
         <div class="flex flex-wrap -m-8">
@@ -44,13 +46,15 @@
                   <h3 
                     class="font-semibold"
                     contenteditable="true"
-                    @blur="updateTestimonial(0, 'author')">
+                    @blur="updateTestimonial(0, 'author')"
+                    @click.stop="selectSection">
                     {{ sectionData.testimonials[0].author }}
                   </h3>
                   <p 
                     class="text-gray-500"
                     contenteditable="true"
-                    @blur="updateTestimonial(0, 'handle')">
+                    @blur="updateTestimonial(0, 'handle')"
+                    @click.stop="selectSection">
                     {{ sectionData.testimonials[0].handle }}
                   </p>
                 </div>
@@ -58,7 +62,8 @@
               <p 
                 class="mb-8 text-xl font-medium text-center"
                 contenteditable="true"
-                @blur="updateTestimonial(0, 'quote')">
+                @blur="updateTestimonial(0, 'quote')"
+                @click.stop="selectSection">
                 {{ sectionData.testimonials[0].quote }}
               </p>
               <div class="h-8 flex items-center justify-center">
@@ -83,13 +88,15 @@
                   <h3 
                     class="font-semibold"
                     contenteditable="true"
-                    @input="updateTestimonial(1, 'author')">
+                    @blur="updateTestimonial(1, 'author')"
+                    @click.stop="selectSection">
                     {{ sectionData.testimonials[1].author }}
                   </h3>
                   <p 
                     class="text-gray-500"
                     contenteditable="true"
-                    @input="updateTestimonial(1, 'handle')">
+                    @blur="updateTestimonial(1, 'handle')"
+                    @click.stop="selectSection">
                     {{ sectionData.testimonials[1].handle }}
                   </p>
                 </div>
@@ -97,7 +104,8 @@
               <p 
                 class="mb-8 text-xl font-medium text-center"
                 contenteditable="true"
-                @input="updateTestimonial(1, 'quote')">
+                @blur="updateTestimonial(1, 'quote')"
+                @click.stop="selectSection">
                 {{ sectionData.testimonials[1].quote }}
               </p>
               <div class="h-8 flex items-center justify-center">
@@ -126,13 +134,16 @@ export default {
     },
     updateSubheading(event) {
       this.sectionData.subheading = event.target.textContent;
+      this.$emit('select', this.sectionData); // Re-select to ensure state is updated
     },
     updateHeading(event) {
       this.sectionData.heading = event.target.textContent;
+      this.$emit('select', this.sectionData);
     },
     updateTestimonial(index, field) {
       return function(event) {
         this.sectionData.testimonials[index][field] = event.target.textContent;
+        this.$emit('select', this.sectionData); // Re-select to ensure state is updated
       }.bind(this);
     }
   }

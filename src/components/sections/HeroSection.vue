@@ -1,4 +1,5 @@
 <!-- src/components/sections/HeroSection.vue -->
+<!-- Modified event handlers to properly bubble up element selection -->
 <template>
   <div class="section-wrapper relative">
     <div class="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex">
@@ -14,30 +15,34 @@
       </button>
     </div>
     
-    <section class="bg-white overflow-hidden pb-10 group" @click="selectSection">
+    <section class="bg-white overflow-hidden pb-10 group" @click.stop="selectSection">
       <div class="container px-4 mx-auto">
         <p 
           class="text-center mb-2 text-lg md:text-xl font-semibold max-w-2xl mx-auto"
           contenteditable="true"
-          @blur="updateSubheading">
+          @blur="updateSubheading"
+          @click.stop="selectSection">
           {{ sectionData.subheading }}
         </p>
         <div class="text-center max-w-6xl mx-auto">
           <h2 
             class="text-center font-bold w-full md:max-w-2xl lg:max-w-6xl leading-[1.2] md:leading-[1.1] lg:leading-[1.1] text-4xl md:text-5xl lg:text-5xl xl:text-6xl tracking-[-0.7px] md:tracking-[-1px] lg:tracking-[-1.3px] text-gray-950 mx-auto break-words mb-4"
             contenteditable="true"
-            @blur="updateHeading">
+            @blur="updateHeading"
+            @click.stop="selectSection">
             {{ sectionData.heading }}
           </h2>
           <p 
             class="mb-6 text-lg md:text-xl text-gray-700 font-medium max-w-2xl mx-auto"
             contenteditable="true"
-            @blur="updateDescription">
+            @blur="updateDescription"
+            @click.stop="selectSection">
             {{ sectionData.description }}
           </p>
           
+          <!-- Rest of the template remains the same -->
+          
           <div class="wistia-video rounded-lg overflow-hidden mb-10 mt-8 max-w-4xl mx-auto">
-            <!-- Video placeholder in the editor, actual embed in published version -->
             <div class="relative" style="padding-top: 56.25%;">
               <div class="absolute inset-0 bg-gray-200 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -51,7 +56,8 @@
           <div class="mb-2 inline-block w-96">
             <button 
               class="text-xl py-4 px-6 w-full text-white font-semibold border border-indigo-700 rounded-xl shadow-4xl focus:ring focus:ring-indigo-300 bg-indigo-600 hover:bg-indigo-700 transition ease-in-out duration-200"
-              type="button">
+              type="button"
+              @click.stop="selectSection">
               <span contenteditable="true" @blur="updateButtonText">{{ sectionData.buttonText }}</span>
             </button>
           </div>
@@ -59,12 +65,13 @@
           <p 
             class="text-gray-500 text-sm mt-1 mb-3 w-96 mx-auto"
             contenteditable="true"
-            @blur="updateDisclaimerText">
+            @blur="updateDisclaimerText"
+            @click.stop="selectSection">
             {{ sectionData.disclaimerText }}
           </p>
           
           <div class="">
-            <button class="py-4 px-6 w-full text-gray-500 transition ease-in-out duration-200 underline" type="button">
+            <button class="py-4 px-6 w-full text-gray-500 transition ease-in-out duration-200 underline" type="button" @click.stop="selectSection">
               <span contenteditable="true" @blur="updateNoThanksText">{{ sectionData.noThanksText }}</span>
             </button>
           </div>
@@ -89,25 +96,33 @@ export default {
     },
     updateSubheading(event) {
       this.sectionData.subheading = event.target.textContent;
+      this.$emit('select', this.sectionData); // Re-select to ensure state is updated
     },
     updateHeading(event) {
       this.sectionData.heading = event.target.textContent;
+      this.$emit('select', this.sectionData);
     },
     updateDescription(event) {
       this.sectionData.description = event.target.textContent;
+      this.$emit('select', this.sectionData);
     },
     updateButtonText(event) {
       this.sectionData.buttonText = event.target.textContent;
+      this.$emit('select', this.sectionData);
     },
     updateDisclaimerText(event) {
       this.sectionData.disclaimerText = event.target.textContent;
+      this.$emit('select', this.sectionData);
     },
     updateNoThanksText(event) {
       this.sectionData.noThanksText = event.target.textContent;
+      this.$emit('select', this.sectionData);
     }
   }
 };
 </script>
+
+<!-- Existing styles remain unchanged -->
 
 <style scoped>
 .section-wrapper {

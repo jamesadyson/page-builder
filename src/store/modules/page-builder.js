@@ -59,7 +59,7 @@ export default {
       { name: 'Trust', icon: 'TrustIcon', type: 'trust' }
     ],
     sectionTemplates,
-    sidebarView: 'layout', // New property to track the current sidebar view
+    sidebarView: 'layout', // Track the current sidebar view
   },
   mutations: {
     ADD_CANVAS_ELEMENT(state, element) {
@@ -123,11 +123,17 @@ export default {
     // Insert an element at a specific index
     insertElementAtIndex({ commit }, { element, index }) {
       commit('INSERT_CANVAS_ELEMENT', { element, index });
+      
+      // After inserting, switch sidebar to layout view
+      commit('SET_SIDEBAR_VIEW', 'layout');
     },
     
     // Add an element to the end of the canvas
     addElementToCanvas({ commit }, element) {
       commit('ADD_CANVAS_ELEMENT', element);
+      
+      // After adding, switch sidebar to layout view
+      commit('SET_SIDEBAR_VIEW', 'layout');
     },
     
     // Remove an element at the specified index
@@ -138,14 +144,40 @@ export default {
     // Select an element at the specified index
     selectElement({ commit }, index) {
       commit('SET_SELECTED_ELEMENT_INDEX', index);
+      
+      // When an element is selected, ensure we're in layout view
+      commit('SET_SIDEBAR_VIEW', 'layout');
     },
     
-    // Update the data of the currently selected element
+    // Update the data of the currently selected element - FIXED
     updateElementData({ commit, state }, data) {
       if (state.selectedElementIndex !== null) {
+        const element = state.canvasElements[state.selectedElementIndex];
+        let updatedData = data;
+        
+        // Special handling for section components
+        if (element.component === 'HeroSection' || element.component === 'TestimonialSection') {
+          // For section components, we need to merge the formatting properties with existing data
+          // rather than replacing the entire data object
+          updatedData = {
+            ...element.data,  // Keep all existing section data
+            
+            // Apply formatting properties if they exist in the new data
+            ...(data.fontSize && { fontSize: data.fontSize }),
+            ...(data.textAlign && { textAlign: data.textAlign }),
+            ...(data.isBold !== undefined && { isBold: data.isBold }),
+            ...(data.isItalic !== undefined && { isItalic: data.isItalic }),
+            ...(data.isUnderline !== undefined && { isUnderline: data.isUnderline }),
+            ...(data.textColor && { textColor: data.textColor }),
+            ...(data.lineHeight && { lineHeight: data.lineHeight }),
+            ...(data.letterSpacing && { letterSpacing: data.letterSpacing })
+          };
+        }
+        
+        // Update the element with either the new data or merged data
         commit('UPDATE_CANVAS_ELEMENT', {
           index: state.selectedElementIndex,
-          data
+          data: updatedData
         });
       }
     },
@@ -167,7 +199,7 @@ export default {
       }, 300); // Match the CSS transition duration
     },
     
-    // Add a section template to the end of the canvas
+    // Add a section template to the end of the canvas - FIXED
     selectSectionTemplate({ commit, dispatch, state }, template) {
       let actualTemplate;
       
@@ -186,16 +218,22 @@ export default {
           component: actualTemplate.component,
           data: JSON.parse(JSON.stringify(actualTemplate.data)) // Create a deep copy to avoid reference issues
         });
+        
+        // Hide the secondary sidebar
+        dispatch('hideSecondarySidebar');
+        
+        // Change sidebar view to layout
+        commit('SET_SIDEBAR_VIEW', 'layout');
+        
+        // FIX: After adding a section, deselect any previously selected element
+        commit('SET_SELECTED_ELEMENT_INDEX', null);
+      } else {
+        // Hide the secondary sidebar even if no template was found
+        dispatch('hideSecondarySidebar');
       }
-      
-      // Hide the secondary sidebar
-      dispatch('hideSecondarySidebar');
-      
-      // Change sidebar view to layout
-      commit('SET_SIDEBAR_VIEW', 'layout');
     },
     
-    // Insert a section template at a specific index
+    // Insert a section template at a specific index - FIXED
     insertSectionTemplateAtIndex({ commit, dispatch, state }, { template, index }) {
       let actualTemplate;
       
@@ -217,13 +255,19 @@ export default {
           },
           index
         });
+        
+        // Hide the secondary sidebar
+        dispatch('hideSecondarySidebar');
+        
+        // Change sidebar view to layout
+        commit('SET_SIDEBAR_VIEW', 'layout');
+        
+        // FIX: After inserting a section, deselect any previously selected element
+        commit('SET_SELECTED_ELEMENT_INDEX', null);
+      } else {
+        // Hide the secondary sidebar even if no template was found
+        dispatch('hideSecondarySidebar');
       }
-      
-      // Hide the secondary sidebar
-      dispatch('hideSecondarySidebar');
-      
-      // Change sidebar view to layout
-      commit('SET_SIDEBAR_VIEW', 'layout');
     },
     
     // Set the entire canvas elements array
