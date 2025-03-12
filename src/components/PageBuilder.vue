@@ -685,9 +685,9 @@
   // Then explicitly switch to layout view to show settings
   this.toggleSidebarView('layout');
 },
-      
-      // NEW: Method to handle selection of a specific field within a section
-      selectFieldFromCanvas(index, fieldInfo) {
+
+// Method to handle selection of a specific field within a section
+selectFieldFromCanvas(index, fieldInfo) {
   // First select the element (section) in the store
   this.selectElement(index);
   

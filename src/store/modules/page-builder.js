@@ -230,52 +230,53 @@ UPDATE_FIELD_FORMAT(state, { index, fieldPath, formatData }) {
     },
     
     // FIXED: Improved method to update element data
-    updateElementData({ commit, state }, updateData) {
-      if (state.selectedElementIndex === null) return;
+    // src/store/modules/page-builder.js - updateElementData action fix
+updateElementData({ commit, state }, updateData) {
+  if (state.selectedElementIndex === null) return;
+  
+  // Handle updating specific field within a section
+  if (updateData && updateData.activeField) {
+    const { elementData, activeField, formatProperty, formatValue } = updateData;
+    
+    // Update format data for the specific field
+    commit('UPDATE_FIELD_FORMAT', {
+      index: state.selectedElementIndex,
+      fieldPath: activeField.fieldPath,
+      formatData: { [formatProperty]: formatValue }
+    });
+    
+    return;
+  }
+  
+  // Handle regular element updates (for backward compatibility)
+  const element = state.canvasElements[state.selectedElementIndex];
+  let updatedData = updateData;
+  
+  // Special handling for section components
+  if (element.component === 'HeroSection' || element.component === 'TestimonialSection') {
+    // For section components, we need to merge the formatting properties with existing data
+    // rather than replacing the entire data object
+    updatedData = {
+      ...element.data,  // Keep all existing section data
       
-      // Handle updating specific field within a section
-      if (updateData && updateData.activeField) {
-        const { elementData, activeField, formatProperty, formatValue } = updateData;
-        
-        // Update format data for the specific field
-        commit('UPDATE_FIELD_FORMAT', {
-          index: state.selectedElementIndex,
-          fieldPath: activeField.fieldPath,
-          formatData: { [formatProperty]: formatValue }
-        });
-        
-        return;
-      }
-      
-      // Handle regular element updates (for backward compatibility)
-      const element = state.canvasElements[state.selectedElementIndex];
-      let updatedData = updateData;
-      
-      // Special handling for section components
-      if (element.component === 'HeroSection' || element.component === 'TestimonialSection') {
-        // For section components, we need to merge the formatting properties with existing data
-        // rather than replacing the entire data object
-        updatedData = {
-          ...element.data,  // Keep all existing section data
-          
-          // Apply formatting properties if they exist in the new data
-          ...(updateData.fontSize && { fontSize: updateData.fontSize }),
-          ...(updateData.textAlign && { textAlign: updateData.textAlign }),
-          ...(updateData.isBold !== undefined && { isBold: updateData.isBold }),
-          ...(updateData.isItalic !== undefined && { isItalic: updateData.isItalic }),
-          ...(updateData.isUnderline !== undefined && { isUnderline: updateData.isUnderline }),
-          ...(updateData.textColor && { textColor: updateData.textColor }),
-          ...(updateData.lineHeight && { lineHeight: updateData.lineHeight }),
-          ...(updateData.letterSpacing && { letterSpacing: updateData.letterSpacing })
-        };
-      }
-      
-      // Update the element with either the new data or merged data
-      commit('UPDATE_CANVAS_ELEMENT', {
-        index: state.selectedElementIndex,
-        data: updatedData
-      });
-    },
+      // Apply formatting properties if they exist in the new data
+      ...(updateData.fontSize && { fontSize: updateData.fontSize }),
+      ...(updateData.textAlign && { textAlign: updateData.textAlign }),
+      ...(updateData.isBold !== undefined && { isBold: updateData.isBold }),
+      ...(updateData.isItalic !== undefined && { isItalic: updateData.isItalic }),
+      ...(updateData.isUnderline !== undefined && { isUnderline: updateData.isUnderline }),
+      ...(updateData.textColor && { textColor: updateData.textColor }),
+      ...(updateData.lineHeight && { lineHeight: updateData.lineHeight }),
+      ...(updateData.letterSpacing && { letterSpacing: updateData.letterSpacing })
+    };
+  }
+  
+  // Update the element with either the new data or merged data
+  commit('UPDATE_CANVAS_ELEMENT', {
+    index: state.selectedElementIndex,
+    data: updatedData
+  });
+},
     
     // Show the secondary sidebar for a specific section type
     showSecondarySidebar({ commit }, sectionType) {

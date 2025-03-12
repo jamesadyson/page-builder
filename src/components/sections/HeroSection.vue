@@ -170,41 +170,40 @@ export default {
     
     // NEW: Updated getFieldClasses to include format classes
     getFieldClasses(fieldName) {
-      // Start with basic selection classes
-      const classes = {
-        'field-selected': this.selectedField === fieldName,
-        'field-editable': true
-      };
-      
-      // Add format classes from section data
-      const formatKey = fieldName + 'Format';
-      if (this.sectionData[formatKey]) {
-        const format = this.sectionData[formatKey];
-        // Add each format class if available
-        if (format.fontSize) classes[format.fontSize] = true;
-        if (format.textAlign) classes['text-' + format.textAlign] = true;
-        if (format.isBold) classes['font-bold'] = true;
-        if (format.isItalic) classes['italic'] = true;
-        if (format.isUnderline) classes['underline'] = true;
-        if (format.lineHeight) classes[format.lineHeight] = true;
-        if (format.letterSpacing) classes[format.letterSpacing] = true;
-      }
-      
-      return classes;
-    },
-    
-    // NEW: Add method to get inline styles for text color
-    getFieldStyles(fieldName) {
-      const styles = {};
-      
-      // Add text color if available
-      const formatKey = fieldName + 'Format';
-      if (this.sectionData[formatKey] && this.sectionData[formatKey].textColor) {
-        styles.color = this.sectionData[formatKey].textColor;
-      }
-      
-      return styles;
-    },
+  // Start with basic selection classes
+  const classes = {
+    'field-selected': this.selectedField === fieldName,
+    'field-editable': true
+  };
+  
+  // Add format classes from section data
+  const formatKey = fieldName + 'Format';
+  if (this.sectionData[formatKey]) {
+    const format = this.sectionData[formatKey];
+    // Add each format class if available
+    if (format.fontSize) classes[format.fontSize] = true;
+    if (format.textAlign) classes['text-' + format.textAlign] = true;
+    if (format.isBold) classes['font-bold'] = true;
+    if (format.isItalic) classes['italic'] = true;
+    if (format.isUnderline) classes['underline'] = true;
+    if (format.lineHeight) classes[format.lineHeight] = true;
+    if (format.letterSpacing) classes[format.letterSpacing] = true;
+  }
+  
+  return classes;
+},
+
+getFieldStyles(fieldName) {
+  const styles = {};
+  
+  // Add text color if available
+  const formatKey = fieldName + 'Format';
+  if (this.sectionData[formatKey] && this.sectionData[formatKey].textColor) {
+    styles.color = this.sectionData[formatKey].textColor;
+  }
+  
+  return styles;
+},
     
     // Update methods for each field
     updateSubheading(event) {
