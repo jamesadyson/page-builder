@@ -112,6 +112,63 @@ export default {
     },
     SET_SIDEBAR_VIEW(state, view) {
       state.sidebarView = view;
+    },
+    // NEW: Add field formatting metadata to a specific section field
+    UPDATE_FIELD_FORMAT(state, { index, fieldPath, formatData }) {
+      if (index === null || index >= state.canvasElements.length) return;
+      
+      const element = state.canvasElements[index];
+      
+      // Ensure element data exists
+      if (!element.data) {
+        element.data = {};
+      }
+      
+      // Get the target field and update its format data
+      if (fieldPath) {
+        // Split the path into parts (e.g., "testimonials.0.author" -> ["testimonials", "0", "author"])
+        const pathParts = fieldPath.split('.');
+        let target = element.data;
+        
+        // Navigate to the nested object, creating it if it doesn't exist
+        for (let i = 0; i < pathParts.length - 1; i++) {
+          const part = pathParts[i];
+          if (!target[part]) {
+            if (!isNaN(Number(pathParts[i + 1]))) {
+              // If the next part is a number, create an array
+              target[part] = [];
+            } else {
+              // Otherwise create an object
+              target[part] = {};
+            }
+          }
+          target = target[part];
+        }
+        
+        // Get the final property name
+        const finalProp = pathParts[pathParts.length - 1];
+        
+        // If the target is a string/primitive value, convert it to an object with value and format
+        if (target[finalProp] && typeof target[finalProp] !== 'object') {
+          const originalValue = target[finalProp];
+          target[finalProp] = {
+            value: originalValue,
+            format: formatData
+          };
+        } else if (!target[finalProp]) {
+          // If the property doesn't exist, create it with format
+          target[finalProp] = {
+            value: '',
+            format: formatData
+          };
+        } else if (target[finalProp] && typeof target[finalProp] === 'object') {
+          // If it's already an object, add or update the format property
+          target[finalProp].format = { ...target[finalProp].format, ...formatData };
+        }
+      } else {
+        // If no field path is provided, update the entire element's format data
+        element.data = { ...element.data, ...formatData };
+      }
     }
   },
   actions: {
@@ -149,37 +206,52 @@ export default {
       commit('SET_SIDEBAR_VIEW', 'layout');
     },
     
-    // Update the data of the currently selected element - FIXED
-    updateElementData({ commit, state }, data) {
-      if (state.selectedElementIndex !== null) {
-        const element = state.canvasElements[state.selectedElementIndex];
-        let updatedData = data;
+    // FIXED: Improved method to update element data
+    updateElementData({ commit, state }, updateData) {
+      if (state.selectedElementIndex === null) return;
+      
+      // Handle updating specific field within a section
+      if (updateData && updateData.activeField) {
+        const { elementData, activeField, formatProperty, formatValue } = updateData;
         
-        // Special handling for section components
-        if (element.component === 'HeroSection' || element.component === 'TestimonialSection') {
-          // For section components, we need to merge the formatting properties with existing data
-          // rather than replacing the entire data object
-          updatedData = {
-            ...element.data,  // Keep all existing section data
-            
-            // Apply formatting properties if they exist in the new data
-            ...(data.fontSize && { fontSize: data.fontSize }),
-            ...(data.textAlign && { textAlign: data.textAlign }),
-            ...(data.isBold !== undefined && { isBold: data.isBold }),
-            ...(data.isItalic !== undefined && { isItalic: data.isItalic }),
-            ...(data.isUnderline !== undefined && { isUnderline: data.isUnderline }),
-            ...(data.textColor && { textColor: data.textColor }),
-            ...(data.lineHeight && { lineHeight: data.lineHeight }),
-            ...(data.letterSpacing && { letterSpacing: data.letterSpacing })
-          };
-        }
-        
-        // Update the element with either the new data or merged data
-        commit('UPDATE_CANVAS_ELEMENT', {
+        // Update format data for the specific field
+        commit('UPDATE_FIELD_FORMAT', {
           index: state.selectedElementIndex,
-          data: updatedData
+          fieldPath: activeField.fieldPath,
+          formatData: { [formatProperty]: formatValue }
         });
+        
+        return;
       }
+      
+      // Handle regular element updates (for backward compatibility)
+      const element = state.canvasElements[state.selectedElementIndex];
+      let updatedData = updateData;
+      
+      // Special handling for section components
+      if (element.component === 'HeroSection' || element.component === 'TestimonialSection') {
+        // For section components, we need to merge the formatting properties with existing data
+        // rather than replacing the entire data object
+        updatedData = {
+          ...element.data,  // Keep all existing section data
+          
+          // Apply formatting properties if they exist in the new data
+          ...(updateData.fontSize && { fontSize: updateData.fontSize }),
+          ...(updateData.textAlign && { textAlign: updateData.textAlign }),
+          ...(updateData.isBold !== undefined && { isBold: updateData.isBold }),
+          ...(updateData.isItalic !== undefined && { isItalic: updateData.isItalic }),
+          ...(updateData.isUnderline !== undefined && { isUnderline: updateData.isUnderline }),
+          ...(updateData.textColor && { textColor: updateData.textColor }),
+          ...(updateData.lineHeight && { lineHeight: updateData.lineHeight }),
+          ...(updateData.letterSpacing && { letterSpacing: updateData.letterSpacing })
+        };
+      }
+      
+      // Update the element with either the new data or merged data
+      commit('UPDATE_CANVAS_ELEMENT', {
+        index: state.selectedElementIndex,
+        data: updatedData
+      });
     },
     
     // Show the secondary sidebar for a specific section type
@@ -199,7 +271,7 @@ export default {
       }, 300); // Match the CSS transition duration
     },
     
-    // Add a section template to the end of the canvas - FIXED
+    // FIXED: Improved method to add section template
     selectSectionTemplate({ commit, dispatch, state }, template) {
       let actualTemplate;
       
@@ -222,10 +294,10 @@ export default {
         // Hide the secondary sidebar
         dispatch('hideSecondarySidebar');
         
-        // Change sidebar view to layout
+        // Change sidebar view to layout - this is critical
         commit('SET_SIDEBAR_VIEW', 'layout');
         
-        // FIX: After adding a section, deselect any previously selected element
+        // After adding a section, deselect any previously selected element
         commit('SET_SELECTED_ELEMENT_INDEX', null);
       } else {
         // Hide the secondary sidebar even if no template was found
@@ -233,7 +305,7 @@ export default {
       }
     },
     
-    // Insert a section template at a specific index - FIXED
+    // FIXED: Improved method to insert section template at a specific index
     insertSectionTemplateAtIndex({ commit, dispatch, state }, { template, index }) {
       let actualTemplate;
       
@@ -259,10 +331,10 @@ export default {
         // Hide the secondary sidebar
         dispatch('hideSecondarySidebar');
         
-        // Change sidebar view to layout
+        // IMPORTANT: Change sidebar view to layout - must be here for state sync
         commit('SET_SIDEBAR_VIEW', 'layout');
         
-        // FIX: After inserting a section, deselect any previously selected element
+        // IMPORTANT: After inserting a section, deselect any previously selected element
         commit('SET_SELECTED_ELEMENT_INDEX', null);
       } else {
         // Hide the secondary sidebar even if no template was found

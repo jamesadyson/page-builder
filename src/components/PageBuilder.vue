@@ -182,6 +182,7 @@
             <TextFormatControls 
               v-if="isTextElement()"
               :element-data="canvasElements[selectedElementIndex].data"
+              :active-field="activeFieldForEditing"
               @update="updateElementData"
             />
           </div>
@@ -241,6 +242,7 @@
                     :element-data="element.data"
                     :section-data="element.data"
                     @select="selectElementFromCanvas(index)"
+                    @select-field="selectFieldFromCanvas(index, $event)"
                     @delete="removeElement(index)"
                     @dragstart="startDrag($event, index)"
                     :class="{'opacity-50': isDragging && draggedElementIndex === index}"
@@ -346,7 +348,10 @@
         closeSidebarTimeout: null,
         isMouseOverSecondarySidebar: false,
         isMouseOverSectionItem: false,
-        currentHoveredSection: null
+        currentHoveredSection: null,
+
+        // NEW: Track which field within a section is being edited
+        activeFieldForEditing: null
       };
     },
     computed: {
@@ -359,7 +364,8 @@
       ...mapGetters('pageBuilder', [
         'getAvailableElements',
         'getAvailableSections',
-        'getActiveSectionTemplates'
+        'getActiveSectionTemplates',
+        'getCurrentSidebarView'
       ]),
       basicElements() {
         return this.getAvailableElements.basic || [];
@@ -374,38 +380,56 @@
         return this.getActiveSectionTemplates || [];
       }
     },
+    watch: {
+      // NEW: Watch for store sidebar view changes to keep component in sync
+      getCurrentSidebarView: {
+        handler(newView) {
+          if (newView !== this.currentSidebarView) {
+            this.currentSidebarView = newView;
+          }
+        },
+        immediate: true
+      }
+    },
     methods: {
       ...mapActions('pageBuilder', [
         'removeElement', 
         'selectElement',
         'updateElementData',
-        'setSidebarView'  // Make sure to map this action
+        'setSidebarView'
       ]),
   
-      // Toggle between layout and elements views
+      // FIXED: Improved toggle sidebar view method
       toggleSidebarView(view) {
+        // First update the local state
         this.currentSidebarView = view;
-        // Also make sure store knows about the change
-        this.$store.dispatch('pageBuilder/setSidebarView', view);
+        // Then sync with the store state
+        this.setSidebarView(view);
         
         if (view === 'elements') {
           this.highlightSidebar();
+        }
+
+        // For layout view, ensure we reset field selection
+        if (view === 'layout') {
+          this.activeFieldForEditing = null;
         }
       },
       
       // Deselect the current element and go back to layout view
       deselectElement() {
         this.$store.commit('pageBuilder/SET_SELECTED_ELEMENT_INDEX', null);
-        this.currentSidebarView = 'layout';
-        this.$store.dispatch('pageBuilder/setSidebarView', 'layout');
+        this.activeFieldForEditing = null;
+        this.toggleSidebarView('layout');
       },
       
       // Select an element and scroll to it in the canvas
       selectElementAndScroll(index) {
         this.selectElement(index);
+        // Reset field selection
+        this.activeFieldForEditing = null;
         // Make sure we're in layout view to see settings
-        this.currentSidebarView = 'layout';
-        this.$store.dispatch('pageBuilder/setSidebarView', 'layout');
+        this.toggleSidebarView('layout');
         
         this.$nextTick(() => {
           this.scrollToElement(index);
@@ -434,8 +458,7 @@
         if (this.currentSidebarView === 'elements' && 
             event.target.classList.contains('canvas-container') ||
             event.target.closest('.canvas-container') === event.target) {
-          this.currentSidebarView = 'layout';
-          this.$store.dispatch('pageBuilder/setSidebarView', 'layout');
+          this.toggleSidebarView('layout');
         }
       },
       
@@ -467,11 +490,10 @@
         
         // Reset active insertion index and switch to layout view
         this.activeInsertionIndex = null;
-        this.currentSidebarView = 'layout';
-        this.$store.dispatch('pageBuilder/setSidebarView', 'layout');
+        this.toggleSidebarView('layout');
       },
       
-      // Method to insert a section template - FIXED
+      // FIXED: Improved method to insert a section template
       insertSectionTemplate(template) {
         const insertIndex = this.activeInsertionIndex !== null ? 
                             this.activeInsertionIndex : 
@@ -482,20 +504,18 @@
           index: insertIndex
         });
         
-        // Reset insertion index, hide the sidebar, and switch to layout view
+        // Reset insertion index and hide the sidebar
         this.activeInsertionIndex = null;
         this.toggleSecondarySidebar(false);
         
-        // FIX: Explicitly set both component and store sidebar view to 'layout'
-        this.currentSidebarView = 'layout';
-        this.$store.dispatch('pageBuilder/setSidebarView', 'layout');
+        // FIXED: This needs to be both here and in the store action
+        // Reset the active field
+        this.activeFieldForEditing = null;
         
-        // Important: Delay a bit to ensure UI updates properly
+        // Force a timeout to ensure DOM updates before changing views
         setTimeout(() => {
-          // Double check we're still in layout view
-          this.currentSidebarView = 'layout';
-          this.$store.dispatch('pageBuilder/setSidebarView', 'layout');
-        }, 50);
+          this.toggleSidebarView('layout');
+        }, 100);
       },
   
       // New insertion point management
@@ -601,11 +621,13 @@
         }
       },
       
-      // Helper method for Element Settings panel - FIXED
+      // IMPROVED: Helper method for Element Settings panel with better type checking
       isTextElement() {
         if (this.selectedElementIndex === null) return false;
         
         const element = this.canvasElements[this.selectedElementIndex];
+        if (!element) return false;
+        
         const componentName = element.component;
         
         // Check for basic text elements
@@ -613,9 +635,16 @@
           return true;
         }
         
-        // FIX: Check for section elements that contain text (like Hero or Testimonial sections)
+        // Check for section elements that contain text (like Hero or Testimonial sections)
         if (componentName === 'HeroSection' || componentName === 'TestimonialSection') {
-          return element.data && (
+          if (!element.data) return false;
+          
+          // If we have an active field within the section, show formatting options
+          if (this.activeFieldForEditing) {
+            return true;
+          }
+          
+          return !!(
             element.data.heading || 
             element.data.subheading || 
             element.data.description ||
@@ -645,11 +674,23 @@
         // First select the element in the store
         this.selectElement(index);
         
-        // Then explicitly switch to layout view to show settings
-        this.currentSidebarView = 'layout';
+        // Reset the active field selection since we're selecting the whole element
+        this.activeFieldForEditing = null;
         
-        // Also ensure the store knows we're in layout view
-        this.$store.dispatch('pageBuilder/setSidebarView', 'layout');
+        // Then explicitly switch to layout view to show settings
+        this.toggleSidebarView('layout');
+      },
+      
+      // NEW: Method to handle selection of a specific field within a section
+      selectFieldFromCanvas(index, fieldInfo) {
+        // First select the element (section) in the store
+        this.selectElement(index);
+        
+        // Set the active field
+        this.activeFieldForEditing = fieldInfo;
+        
+        // Switch to layout view to show settings
+        this.toggleSidebarView('layout');
       },
         
       // Improved drag and drop methods
@@ -799,12 +840,14 @@
       }
   },
   mounted() {
-    // When the page first loads, check if we should switch to elements view
-    // If no elements on the canvas, stay in layout view to show empty state
-    // Otherwise you could auto-switch to elements if needed:
-    // if (this.canvasElements.length === 0) {
-    //   this.toggleSidebarView('elements');
-    // }
+    // FIXED: Ensure proper sidebar view state at startup
+    // Use the store's sidebar view if already set
+    if (this.getCurrentSidebarView) {
+      this.currentSidebarView = this.getCurrentSidebarView;
+    } else {
+      // Otherwise init the store with our default
+      this.setSidebarView(this.currentSidebarView);
+    }
   },
   beforeDestroy() {
     // Ensure all event listeners are removed when component is destroyed

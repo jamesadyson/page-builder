@@ -1,5 +1,4 @@
 <!-- src/components/sections/HeroSection.vue -->
-<!-- Modified event handlers to properly bubble up element selection -->
 <template>
   <div class="section-wrapper relative">
     <div class="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex">
@@ -21,7 +20,9 @@
           class="text-center mb-2 text-lg md:text-xl font-semibold max-w-2xl mx-auto"
           contenteditable="true"
           @blur="updateSubheading"
-          @click.stop="selectSection">
+          @focus="selectField('subheading')"
+          @click.stop="selectField('subheading')"
+          :class="getFieldClasses('subheading')">
           {{ sectionData.subheading }}
         </p>
         <div class="text-center max-w-6xl mx-auto">
@@ -29,18 +30,20 @@
             class="text-center font-bold w-full md:max-w-2xl lg:max-w-6xl leading-[1.2] md:leading-[1.1] lg:leading-[1.1] text-4xl md:text-5xl lg:text-5xl xl:text-6xl tracking-[-0.7px] md:tracking-[-1px] lg:tracking-[-1.3px] text-gray-950 mx-auto break-words mb-4"
             contenteditable="true"
             @blur="updateHeading"
-            @click.stop="selectSection">
+            @focus="selectField('heading')"
+            @click.stop="selectField('heading')"
+            :class="getFieldClasses('heading')">
             {{ sectionData.heading }}
           </h2>
           <p 
             class="mb-6 text-lg md:text-xl text-gray-700 font-medium max-w-2xl mx-auto"
             contenteditable="true"
             @blur="updateDescription"
-            @click.stop="selectSection">
+            @focus="selectField('description')"
+            @click.stop="selectField('description')"
+            :class="getFieldClasses('description')">
             {{ sectionData.description }}
           </p>
-          
-          <!-- Rest of the template remains the same -->
           
           <div class="wistia-video rounded-lg overflow-hidden mb-10 mt-8 max-w-4xl mx-auto">
             <div class="relative" style="padding-top: 56.25%;">
@@ -57,8 +60,14 @@
             <button 
               class="text-xl py-4 px-6 w-full text-white font-semibold border border-indigo-700 rounded-xl shadow-4xl focus:ring focus:ring-indigo-300 bg-indigo-600 hover:bg-indigo-700 transition ease-in-out duration-200"
               type="button"
-              @click.stop="selectSection">
-              <span contenteditable="true" @blur="updateButtonText">{{ sectionData.buttonText }}</span>
+              @click.stop="selectField('buttonText')">
+              <span 
+                contenteditable="true" 
+                @blur="updateButtonText"
+                @focus="selectField('buttonText')"
+                :class="getFieldClasses('buttonText')">
+                {{ sectionData.buttonText }}
+              </span>
             </button>
           </div>
           
@@ -66,13 +75,21 @@
             class="text-gray-500 text-sm mt-1 mb-3 w-96 mx-auto"
             contenteditable="true"
             @blur="updateDisclaimerText"
-            @click.stop="selectSection">
+            @focus="selectField('disclaimerText')"
+            @click.stop="selectField('disclaimerText')"
+            :class="getFieldClasses('disclaimerText')">
             {{ sectionData.disclaimerText }}
           </p>
           
           <div class="">
-            <button class="py-4 px-6 w-full text-gray-500 transition ease-in-out duration-200 underline" type="button" @click.stop="selectSection">
-              <span contenteditable="true" @blur="updateNoThanksText">{{ sectionData.noThanksText }}</span>
+            <button class="py-4 px-6 w-full text-gray-500 transition ease-in-out duration-200 underline" type="button" @click.stop="selectField('noThanksText')">
+              <span 
+                contenteditable="true" 
+                @blur="updateNoThanksText"
+                @focus="selectField('noThanksText')"
+                :class="getFieldClasses('noThanksText')">
+                {{ sectionData.noThanksText }}
+              </span>
             </button>
           </div>
         </div>
@@ -90,30 +107,95 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      selectedField: null
+    };
+  },
   methods: {
+    // General section selection
     selectSection() {
       this.$emit('select', this.sectionData);
+      this.selectedField = null;
     },
+    
+    // NEW: Field-specific selection method
+    selectField(fieldName) {
+      this.selectedField = fieldName;
+      
+      // Emit event with field information for parent
+      this.$emit('select-field', {
+        fieldPath: fieldName,
+        fieldName: fieldName,
+        // Optional formatting overrides can be passed here
+        formatOverrides: this.getFieldFormatOverrides(fieldName)
+      });
+    },
+    
+    // NEW: Get any format overrides for a specific field
+    getFieldFormatOverrides(fieldName) {
+      // If the section has field-specific format data, return it
+      if (this.sectionData[`${fieldName}Format`]) {
+        return this.sectionData[`${fieldName}Format`];
+      }
+      
+      // Return field-specific default formatting
+      const defaults = {
+        heading: {
+          fontSize: 'text-4xl',
+          isBold: true
+        },
+        subheading: {
+          fontSize: 'text-xl'
+        },
+        description: {
+          fontSize: 'text-lg'
+        },
+        buttonText: {
+          isBold: true
+        },
+        disclaimerText: {
+          fontSize: 'text-sm'
+        }
+      };
+      
+      return defaults[fieldName] || {};
+    },
+    
+    // Helper to get dynamic classes for a field based on selection state
+    getFieldClasses(fieldName) {
+      return {
+        'field-selected': this.selectedField === fieldName,
+        'field-editable': true
+      };
+    },
+    
+    // Update methods for each field
     updateSubheading(event) {
       this.sectionData.subheading = event.target.textContent;
-      this.$emit('select', this.sectionData); // Re-select to ensure state is updated
+      this.$emit('select', this.sectionData);
     },
+    
     updateHeading(event) {
       this.sectionData.heading = event.target.textContent;
       this.$emit('select', this.sectionData);
     },
+    
     updateDescription(event) {
       this.sectionData.description = event.target.textContent;
       this.$emit('select', this.sectionData);
     },
+    
     updateButtonText(event) {
       this.sectionData.buttonText = event.target.textContent;
       this.$emit('select', this.sectionData);
     },
+    
     updateDisclaimerText(event) {
       this.sectionData.disclaimerText = event.target.textContent;
       this.$emit('select', this.sectionData);
     },
+    
     updateNoThanksText(event) {
       this.sectionData.noThanksText = event.target.textContent;
       this.$emit('select', this.sectionData);
@@ -121,8 +203,6 @@ export default {
   }
 };
 </script>
-
-<!-- Existing styles remain unchanged -->
 
 <style scoped>
 .section-wrapper {
@@ -141,5 +221,11 @@ export default {
 [contenteditable]:focus {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
   border-radius: 4px;
+}
+
+.field-selected {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.6), 0 0 0 4px rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  background-color: rgba(59, 130, 246, 0.05);
 }
 </style>
