@@ -1,49 +1,43 @@
 <!-- src/components/PageBuilder.vue -->
 <template>
-  <div class="page-builder flex flex-col h-screen">
-    <!-- Full-width header -->
+<div class="page-builder flex flex-col h-screen">
+    <!-- Full-width header with Layout and Add buttons -->
     <div class="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
-      <div></div> <!-- Empty div to maintain flex spacing -->
+      <div class="flex items-center space-x-2">
+        <button 
+          class="px-3 py-1.5 text-sm rounded hover:bg-gray-100 flex items-center"
+          @click="toggleSidebarView('layout')"
+          :class="{ 'bg-blue-100 text-blue-600': currentSidebarView === 'layout' }"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+          </svg>
+          Layout
+        </button>
+        <button 
+          class="px-3 py-1.5 text-sm rounded hover:bg-gray-100 flex items-center"
+          @click="toggleSidebarView('elements')"
+          :class="{ 'bg-blue-100 text-blue-600': currentSidebarView === 'elements' }"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add
+        </button>
+      </div>
       <div class="flex space-x-2">
         <button class="px-3 py-1 border border-gray-300 rounded text-sm">Preview</button>
         <button class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Publish</button>
       </div>
     </div>
     
-    <!-- Main content area -->
+<!-- Main content area -->
     <div class="flex flex-1 overflow-hidden">
-      <!-- Left Sidebar with multiple views -->
+      <!-- Left Sidebar without the title and navigation buttons -->
       <div 
         class="w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto relative"
         :class="{ 'sidebar-highlight': sidebarHighlighted }"
       >
-        <!-- Sidebar Header -->
-        <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 class="text-lg font-medium text-gray-800">Page Builder</h2>
-          <div class="flex items-center space-x-2">
-            <button 
-              class="px-2 py-1 text-sm rounded hover:bg-gray-100 flex items-center"
-              @click="toggleSidebarView('layout')"
-              :class="{ 'text-blue-600': currentSidebarView === 'layout' }"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-              </svg>
-              Layout
-            </button>
-            <button 
-              class="px-2 py-1 text-sm rounded hover:bg-gray-100 flex items-center"
-              @click="toggleSidebarView('elements')"
-              :class="{ 'text-blue-600': currentSidebarView === 'elements' }"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-              Add
-            </button>
-          </div>
-        </div>
-        
         <!-- Layout View - Shows sections already added to the page -->
         <div v-if="currentSidebarView === 'layout'">
           <div class="p-4">
@@ -111,6 +105,7 @@
             </div>
           </div>
         </div>
+      
         
         <!-- Elements View - Shows available elements and sections to add -->
         <div v-if="currentSidebarView === 'elements'">
@@ -275,21 +270,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="bg-white border-t border-gray-200 p-2 text-center text-xs text-gray-500">
-          <div class="flex justify-center space-x-3">
-            <span>Terms of use</span>
-            <span>Privacy policy</span>
-            <span>Manage Cookies</span>
-          </div>
-          <div class="mt-2 flex justify-center items-center">
-            <span class="flex items-center">
-              <svg class="h-4 w-4 mr-1 text-pink-500" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L1 21h22L12 2z" />
-              </svg>
-              Page Builder
-            </span>
-          </div>
-        </div>
+
       </div>
 
       <!-- Right Sidebar for Options -->
