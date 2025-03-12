@@ -1,259 +1,214 @@
 <!-- src/components/PageBuilder.vue -->
 <template>
-  <div class="page-builder flex h-screen">
-    <!-- Left Sidebar with multiple views -->
-    <div 
-      class="w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto relative"
-      :class="{ 'sidebar-highlight': sidebarHighlighted }"
-    >
-      <!-- Sidebar Header -->
-      <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-        <h2 class="text-lg font-medium text-gray-800">Page Builder</h2>
-        <div class="flex items-center space-x-2">
-          <button 
-            class="px-2 py-1 text-sm rounded hover:bg-gray-100 flex items-center"
-            @click="toggleSidebarView('layout')"
-            :class="{ 'text-blue-600': currentSidebarView === 'layout' }"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
-            Layout
-          </button>
-          <button 
-            class="px-2 py-1 text-sm rounded hover:bg-gray-100 flex items-center"
-            @click="toggleSidebarView('elements')"
-            :class="{ 'text-blue-600': currentSidebarView === 'elements' }"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Add
-          </button>
-        </div>
+  <div class="page-builder flex flex-col h-screen">
+    <!-- Full-width header -->
+    <div class="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+      <div></div> <!-- Empty div to maintain flex spacing -->
+      <div class="flex space-x-2">
+        <button class="px-3 py-1 border border-gray-300 rounded text-sm">Preview</button>
+        <button class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Publish</button>
       </div>
-      
-      <!-- Layout View - Shows sections already added to the page -->
-      <div v-if="currentSidebarView === 'layout'">
-        <div class="p-4">
-          <div v-if="canvasElements.length === 0" class="text-center py-8">
-            <p class="text-gray-500 mb-4">No sections added to your page yet</p>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Left Sidebar with multiple views -->
+      <div 
+        class="w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto relative"
+        :class="{ 'sidebar-highlight': sidebarHighlighted }"
+      >
+        <!-- Sidebar Header -->
+        <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+          <h2 class="text-lg font-medium text-gray-800">Page Builder</h2>
+          <div class="flex items-center space-x-2">
             <button 
-              @click="toggleSidebarView('elements')" 
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              class="px-2 py-1 text-sm rounded hover:bg-gray-100 flex items-center"
+              @click="toggleSidebarView('layout')"
+              :class="{ 'text-blue-600': currentSidebarView === 'layout' }"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
               </svg>
-              Add Section
+              Layout
             </button>
-          </div>
-          <div v-else class="space-y-2">
-            <h3 class="text-sm font-medium text-gray-600 mb-3">Page Layout</h3>
-            <div
-              v-for="(element, index) in canvasElements"
-              :key="'layout-' + index"
-              class="border border-gray-200 rounded p-3 hover:border-blue-300 transition-colors cursor-pointer"
-              :class="{ 'border-blue-500 bg-blue-50': selectedElementIndex === index }"
-              @click="selectElementFromCanvas(index)"
-            >
-              <div class="flex items-center justify-between">
-                <!-- Section title based on component type -->
-                <div class="flex items-center">
-                  <div class="h-6 w-6 bg-gray-100 rounded-md flex items-center justify-center mr-2">
-                    <SectionIcon :type="element.component" class="h-4 w-4 text-gray-600" />
-                  </div>
-                  <span class="text-sm font-medium">{{ getSectionName(element, index) }}</span>
-                </div>
-                
-                <!-- Actions -->
-                <div class="flex items-center space-x-1">
-                  <button class="p-1 text-gray-400 hover:text-gray-600" @click.stop="moveElement(index, index - 1)" :disabled="index === 0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" :class="{ 'opacity-50': index === 0 }">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
-                  </button>
-                  <button class="p-1 text-gray-400 hover:text-gray-600" @click.stop="moveElement(index, index + 2)" :disabled="index === canvasElements.length - 1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" :class="{ 'opacity-50': index === canvasElements.length - 1 }">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                  </button>
-                  <button class="p-1 text-gray-400 hover:text-red-600" @click.stop="removeElement(index)">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Add new element button -->
             <button 
-              @click="toggleSidebarView('elements')" 
-              class="mt-4 w-full py-2 border border-dashed border-gray-300 rounded-md text-gray-500 hover:border-blue-300 hover:text-blue-600 flex items-center justify-center transition-colors"
+              class="px-2 py-1 text-sm rounded hover:bg-gray-100 flex items-center"
+              @click="toggleSidebarView('elements')"
+              :class="{ 'text-blue-600': currentSidebarView === 'elements' }"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              Add Section
+              Add
             </button>
           </div>
         </div>
-      </div>
-      
-      <!-- Elements View - Shows available elements and sections to add -->
-      <div v-if="currentSidebarView === 'elements'">
-        <!-- Basic Elements -->
-        <div>
-          <div class="px-4 py-2 text-sm font-medium text-gray-600">Basic blocks</div>
-          <div
-            v-for="(element, index) in basicElements"
-            :key="'basic-' + index"
-            class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center"
-            @click="insertElement(element, activeInsertionIndex !== null ? activeInsertionIndex : canvasElements.length)"
-          >
-            <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
-              <component :is="element.icon" class="w-5 h-5" />
+        
+        <!-- Layout View - Shows sections already added to the page -->
+        <div v-if="currentSidebarView === 'layout'">
+          <div class="p-4">
+            <div v-if="canvasElements.length === 0" class="text-center py-8">
+              <p class="text-gray-500 mb-4">No sections added to your page yet</p>
+              <button 
+                @click="toggleSidebarView('elements')" 
+                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Add Section
+              </button>
             </div>
-            <span>{{ element.name }}</span>
+            <div v-else class="space-y-2">
+              <h3 class="text-sm font-medium text-gray-600 mb-3">Page Layout</h3>
+              <div
+                v-for="(element, index) in canvasElements"
+                :key="'layout-' + index"
+                class="border border-gray-200 rounded p-3 hover:border-blue-300 transition-colors cursor-pointer"
+                :class="{ 'border-blue-500 bg-blue-50': selectedElementIndex === index }"
+                @click="selectElementFromCanvas(index)"
+              >
+                <div class="flex items-center justify-between">
+                  <!-- Section title based on component type -->
+                  <div class="flex items-center">
+                    <div class="h-6 w-6 bg-gray-100 rounded-md flex items-center justify-center mr-2">
+                      <SectionIcon :type="element.component" class="h-4 w-4 text-gray-600" />
+                    </div>
+                    <span class="text-sm font-medium">{{ getSectionName(element, index) }}</span>
+                  </div>
+                  
+                  <!-- Actions -->
+                  <div class="flex items-center space-x-1">
+                    <button class="p-1 text-gray-400 hover:text-gray-600" @click.stop="moveElement(index, index - 1)" :disabled="index === 0">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" :class="{ 'opacity-50': index === 0 }">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      </svg>
+                    </button>
+                    <button class="p-1 text-gray-400 hover:text-gray-600" @click.stop="moveElement(index, index + 2)" :disabled="index === canvasElements.length - 1">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" :class="{ 'opacity-50': index === canvasElements.length - 1 }">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      </svg>
+                    </button>
+                    <button class="p-1 text-gray-400 hover:text-red-600" @click.stop="removeElement(index)">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Add new element button -->
+              <button 
+                @click="toggleSidebarView('elements')" 
+                class="mt-4 w-full py-2 border border-dashed border-gray-300 rounded-md text-gray-500 hover:border-blue-300 hover:text-blue-600 flex items-center justify-center transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Add Section
+              </button>
+            </div>
           </div>
-
-          <div class="px-4 py-2 text-sm font-medium text-gray-600 mt-4">Interactive blocks</div>
-          <div
-            v-for="(element, index) in interactiveElements"
-            :key="'interactive-' + index"
-            class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center"
-            @click="insertElement(element, activeInsertionIndex !== null ? activeInsertionIndex : canvasElements.length)"
-          >
-            <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
-              <component :is="element.icon" class="w-5 h-5" />
-            </div>
-            <span>{{ element.name }}</span>
-          </div>
         </div>
-
-        <div class="sidebar-sections mt-6">
-          <div class="px-4 py-2 text-sm font-medium text-gray-600">Sections</div>
-          <div
-            v-for="(section, index) in sections"
-            :key="index"
-            class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center section-item relative"
-            @mouseenter="handleSectionHover(section.type)"
-            @mouseleave="handleSectionLeave"
-            @click="selectSection(section)"
-          >
-            <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
-              <component :is="section.icon" class="w-5 h-5" />
-            </div>
-            <span>{{ section.name }}</span>
-            <div class="absolute right-4">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </div>
-          
-          <!-- Secondary Sidebar for Section Templates -->
-          <SecondarySidebar
-            :visible="showSecondarySidebar"
-            :section-type="activeSectionType"
-            :templates="activeSectionTemplates"
-            @close="toggleSecondarySidebar(false)"
-            @select-template="insertSectionTemplate"
-            @mouse-leave="handleSecondarySidebarLeave"
-            @mouse-enter="handleSecondarySidebarEnter"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Canvas Area - Keeping most of the original code but adding click event -->
-    <div class="flex-1 bg-gray-100 overflow-auto flex flex-col" @click="handleCanvasClick">
-      <!-- Toolbar -->
-      <div class="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
-        <div class="flex space-x-4">
-          <button class="p-2 rounded hover:bg-gray-100">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 class="text-lg font-medium">Blank</h1>
-        </div>
-        <div class="flex space-x-2">
-          <button class="px-3 py-1 border border-gray-300 rounded text-sm">Preview</button>
-          <button class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Publish</button>
-        </div>
-      </div>
-
-      <!-- Canvas -->
-      <div class="flex-1 p-8 overflow-y-auto" ref="canvasArea">
-        <div class="bg-white shadow-sm rounded-md mx-auto max-w-4xl min-h-[600px] relative canvas-container">
-          <div v-if="canvasElements.length === 0" class="absolute inset-0 flex items-center justify-center">
-            <!-- Initial empty state -->
-            <button
-              @click="activateInsertionPoint(0); toggleSidebarView('elements')"
-              class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50"
+        
+        <!-- Elements View - Shows available elements and sections to add -->
+        <div v-if="currentSidebarView === 'elements'">
+          <!-- Basic Elements -->
+          <div>
+            <div class="px-4 py-2 text-sm font-medium text-gray-600">Basic blocks</div>
+            <div
+              v-for="(element, index) in basicElements"
+              :key="'basic-' + index"
+              class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center"
+              @click="insertElement(element, activeInsertionIndex !== null ? activeInsertionIndex : canvasElements.length)"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
+              <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
+                <component :is="element.icon" class="w-5 h-5" />
+              </div>
+              <span>{{ element.name }}</span>
+            </div>
+
+            <div class="px-4 py-2 text-sm font-medium text-gray-600 mt-4">Interactive blocks</div>
+            <div
+              v-for="(element, index) in interactiveElements"
+              :key="'interactive-' + index"
+              class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center"
+              @click="insertElement(element, activeInsertionIndex !== null ? activeInsertionIndex : canvasElements.length)"
+            >
+              <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
+                <component :is="element.icon" class="w-5 h-5" />
+              </div>
+              <span>{{ element.name }}</span>
+            </div>
           </div>
 
-          <div v-else>
-            <!-- Top insertion zone (index 0) -->
-            <div 
-              class="insertion-zone w-full"
-              :class="{'active': hoveredInsertionIndex === 0}"
-              @mouseenter="setHoveredInsertionIndex(0)"
-              @mouseleave="clearHoveredInsertionIndex"
-              data-index="0"
+          <div class="sidebar-sections mt-6">
+            <div class="px-4 py-2 text-sm font-medium text-gray-600">Sections</div>
+            <div
+              v-for="(section, index) in sections"
+              :key="index"
+              class="px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center section-item relative"
+              @mouseenter="handleSectionHover(section.type)"
+              @mouseleave="handleSectionLeave"
+              @click="selectSection(section)"
             >
-              <div class="relative flex justify-center w-full">
-                <div class="insertion-line"></div>
-                <button
-                  v-show="hoveredInsertionIndex === 0 && !isDragging"
-                  @click="activateInsertionPoint(0); toggleSidebarView('elements')"
-                  class="insertion-button"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
+              <div class="bg-blue-100 text-blue-500 w-8 h-8 rounded-md flex items-center justify-center mr-3">
+                <component :is="section.icon" class="w-5 h-5" />
+              </div>
+              <span>{{ section.name }}</span>
+              <div class="absolute right-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
             
-            <!-- Render each element with an insertion zone after it -->
-            <div 
-              v-for="(element, index) in canvasElements" 
-              :key="index"
-              class="element-wrapper relative"
-              :class="{'opacity-50': isDragging && draggedElementIndex === index}"
-            >
-              <!-- The actual element component -->
-              <component
-                :is="element.component"
-                :element-data="element.data"
-                :section-data="element.data"
-                @select="selectElementFromCanvas(index)"
-                @delete="removeElement(index)"
-                @dragstart="startDrag($event, index)"
-                :class="{'opacity-50': isDragging && draggedElementIndex === index}"
-              />
-              
-              <!-- Insertion zone after this element (index: index+1) -->
+            <!-- Secondary Sidebar for Section Templates -->
+            <SecondarySidebar
+              :visible="showSecondarySidebar"
+              :section-type="activeSectionType"
+              :templates="activeSectionTemplates"
+              @close="toggleSecondarySidebar(false)"
+              @select-template="insertSectionTemplate"
+              @mouse-leave="handleSecondarySidebarLeave"
+              @mouse-enter="handleSecondarySidebarEnter"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Canvas Area - now without its own header -->
+      <div class="flex-1 bg-gray-100 overflow-auto flex flex-col" @click="handleCanvasClick">
+        <!-- Canvas -->
+        <div class="flex-1 p-8 overflow-y-auto" ref="canvasArea">
+          <div class="bg-white shadow-sm rounded-md mx-auto max-w-4xl min-h-[600px] relative canvas-container">
+            <div v-if="canvasElements.length === 0" class="absolute inset-0 flex items-center justify-center">
+              <!-- Initial empty state -->
+              <button
+                @click="activateInsertionPoint(0); toggleSidebarView('elements')"
+                class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
+
+            <div v-else>
+              <!-- Top insertion zone (index 0) -->
               <div 
                 class="insertion-zone w-full"
-                :class="{'active': hoveredInsertionIndex === index + 1}"
-                @mouseenter="setHoveredInsertionIndex(index + 1)"
+                :class="{'active': hoveredInsertionIndex === 0}"
+                @mouseenter="setHoveredInsertionIndex(0)"
                 @mouseleave="clearHoveredInsertionIndex"
-                :data-index="index + 1"
+                data-index="0"
               >
                 <div class="relative flex justify-center w-full">
                   <div class="insertion-line"></div>
                   <button
-                    v-show="hoveredInsertionIndex === index + 1 && !isDragging"
-                    @click="activateInsertionPoint(index + 1); toggleSidebarView('elements')"
+                    v-show="hoveredInsertionIndex === 0 && !isDragging"
+                    @click="activateInsertionPoint(0); toggleSidebarView('elements')"
                     class="insertion-button"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -262,64 +217,105 @@
                   </button>
                 </div>
               </div>
-            </div>
-            
-            <!-- Add element button after content -->
-            <div class="py-4 flex justify-center">
-              <button
-                @click="activateInsertionPoint(canvasElements.length); toggleSidebarView('elements')"
-                class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50"
+              
+              <!-- Render each element with an insertion zone after it -->
+              <div 
+                v-for="(element, index) in canvasElements" 
+                :key="index"
+                class="element-wrapper relative"
+                :class="{'opacity-50': isDragging && draggedElementIndex === index}"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
+                <!-- The actual element component -->
+                <component
+                  :is="element.component"
+                  :element-data="element.data"
+                  :section-data="element.data"
+                  @select="selectElementFromCanvas(index)"
+                  @delete="removeElement(index)"
+                  @dragstart="startDrag($event, index)"
+                  :class="{'opacity-50': isDragging && draggedElementIndex === index}"
+                />
+                
+                <!-- Insertion zone after this element (index: index+1) -->
+                <div 
+                  class="insertion-zone w-full"
+                  :class="{'active': hoveredInsertionIndex === index + 1}"
+                  @mouseenter="setHoveredInsertionIndex(index + 1)"
+                  @mouseleave="clearHoveredInsertionIndex"
+                  :data-index="index + 1"
+                >
+                  <div class="relative flex justify-center w-full">
+                    <div class="insertion-line"></div>
+                    <button
+                      v-show="hoveredInsertionIndex === index + 1 && !isDragging"
+                      @click="activateInsertionPoint(index + 1); toggleSidebarView('elements')"
+                      class="insertion-button"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Add element button after content -->
+              <div class="py-4 flex justify-center">
+                <button
+                  @click="activateInsertionPoint(canvasElements.length); toggleSidebarView('elements')"
+                  class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-white border-t border-gray-200 p-2 text-center text-xs text-gray-500">
+          <div class="flex justify-center space-x-3">
+            <span>Terms of use</span>
+            <span>Privacy policy</span>
+            <span>Manage Cookies</span>
+          </div>
+          <div class="mt-2 flex justify-center items-center">
+            <span class="flex items-center">
+              <svg class="h-4 w-4 mr-1 text-pink-500" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L1 21h22L12 2z" />
+              </svg>
+              Page Builder
+            </span>
           </div>
         </div>
       </div>
 
-      <!-- Footer -->
-      <div class="bg-white border-t border-gray-200 p-2 text-center text-xs text-gray-500">
-        <div class="flex justify-center space-x-3">
-          <span>Terms of use</span>
-          <span>Privacy policy</span>
-          <span>Manage Cookies</span>
+      <!-- Right Sidebar for Options -->
+      <div v-if="selectedElementIndex !== null" class="w-64 bg-white border-l border-gray-200 shadow-sm overflow-y-auto">
+        <div class="p-4 border-b border-gray-200">
+          <h2 class="text-lg font-medium text-gray-800">Element Settings</h2>
         </div>
-        <div class="mt-2 flex justify-center items-center">
-          <span class="flex items-center">
-            <svg class="h-4 w-4 mr-1 text-pink-500" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L1 21h22L12 2z" />
-            </svg>
-            Page Builder
-          </span>
+        <div class="p-4">
+          <!-- Element specific settings -->
+          <TextFormatControls 
+            v-if="isTextElement()"
+            :element-data="canvasElements[selectedElementIndex].data"
+            @update="updateElementData"
+          />
         </div>
       </div>
-    </div>
-
-    <!-- Right Sidebar for Options -->
-    <div v-if="selectedElementIndex !== null" class="w-64 bg-white border-l border-gray-200 shadow-sm overflow-y-auto">
-      <div class="p-4 border-b border-gray-200">
-        <h2 class="text-lg font-medium text-gray-800">Element Settings</h2>
-      </div>
-      <div class="p-4">
-        <!-- Element specific settings -->
-        <TextFormatControls 
-          v-if="isTextElement()"
-          :element-data="canvasElements[selectedElementIndex].data"
-          @update="updateElementData"
-        />
-      </div>
-    </div>
-    
-    <!-- Drag ghost element - This follows the cursor during drag -->
-    <div 
-      v-if="isDragging && draggedElementIndex !== null" 
-      class="drag-ghost"
-      :style="{ top: `${dragGhostPosition.y}px`, left: `${dragGhostPosition.x}px` }"
-    >
-      <div class="text-sm font-medium truncate">
-        Moving: {{ getElementName(canvasElements[draggedElementIndex].component) }}
+      
+      <!-- Drag ghost element - This follows the cursor during drag -->
+      <div 
+        v-if="isDragging && draggedElementIndex !== null" 
+        class="drag-ghost"
+        :style="{ top: `${dragGhostPosition.y}px`, left: `${dragGhostPosition.x}px` }"
+      >
+        <div class="text-sm font-medium truncate">
+          Moving: {{ getElementName(canvasElements[draggedElementIndex].component) }}
+        </div>
       </div>
     </div>
   </div>
@@ -333,6 +329,7 @@ import BulletElement from '@/components/elements/BulletElement.vue';
 import FeatureElement from '@/components/elements/FeatureElement.vue';
 import TextFormatControls from '@/components/TextFormatControls.vue';
 import TestimonialSection from '@/components/sections/TestimonialSection.vue';
+import HeroSection from '@/components/sections/HeroSection.vue';
 import SecondarySidebar from '@/components/SecondarySidebar.vue';
 import { mapState, mapGetters, mapActions } from 'vuex';
 import SectionIcon from '@/components/SectionIcon.vue';
@@ -346,6 +343,7 @@ export default {
     FeatureElement,
     TextFormatControls,
     TestimonialSection,
+    HeroSection,
     SecondarySidebar,
     SectionIcon
   },
@@ -428,6 +426,8 @@ export default {
     getSectionName(element, index) {
       if (element.component === 'TestimonialSection') {
         return `Testimonials ${index + 1}`;
+      } else if (element.component === 'HeroSection') {
+        return `Hero ${index + 1}`;
       } else if (element.component === 'HeadingElement') {
         return `Heading: ${element.data.text.substring(0, 15)}${element.data.text.length > 15 ? '...' : ''}`;
       } else if (element.component === 'TextElement') {
@@ -441,8 +441,6 @@ export default {
       }
     },
     
-    // This method has been replaced by the SectionIcon component
-
     // Method to insert an element at a specific position
     insertElement(element, index) {
       this.$store.dispatch('pageBuilder/insertElementAtIndex', {
@@ -560,7 +558,7 @@ export default {
       
       // Set a new timeout to show the secondary sidebar
       this.hoverTimeout = setTimeout(() => {
-        if (sectionType === 'testimonials') {
+        if (sectionType === 'testimonials' || sectionType === 'hero') {
           this.toggleSecondarySidebar(true, sectionType);
         }
       }, this.hoverDelay);
@@ -568,7 +566,7 @@ export default {
     
     selectSection(section) {
       // If we have templates for this section type, show them
-      if (section.type === 'testimonials') {
+      if (section.type === 'testimonials' || section.type === 'hero') {
         this.toggleSecondarySidebar(true, section.type);
       } else {
         console.log(`Selected section: ${section.name}`);
@@ -591,6 +589,7 @@ export default {
         case 'BulletElement': return 'List';
         case 'FeatureElement': return 'Feature';
         case 'TestimonialSection': return 'Testimonial';
+        case 'HeroSection': return 'Hero';
         default: return 'Element';
       }
     },

@@ -74,9 +74,28 @@ export default {
         }
       }
     ],
-    hero: [
-      // Hero section templates will go here
-    ],
+// Inside the export default object
+hero: [
+  {
+    id: 'hero-upsell-1',
+    name: 'Upsell Hero 1',
+    thumbnail: '/thumbnails/hero-upsell.jpg', // You'll need to create this image
+    component: 'HeroSection',
+    data: {
+      subheading: 'Special One-Time Upgrade',
+      heading: 'Discover the \'Secret Formula\' for Turning Your Course Idea into Revenue in Record Time',
+      description: 'Discover the proven blueprint for building an influential presence on LinkedIn without wasting your valuable time and effort',
+      buttonText: 'Add to my Order (Just $97)',
+      disclaimerText: 'By clicking the button above you agree to be charged $200 now and $200 every year until cancelled',
+      noThanksText: 'No thanks, please do not add this offer to my purchase',
+      videoEmbed: {
+        scriptSrc1: 'https://fast.wistia.com/embed/medias/zfzx106j3e.jsonp',
+        scriptSrc2: 'https://fast.wistia.com/assets/external/E-v1.js',
+        videoId: 'zfzx106j3e'
+      }
+    }
+  }
+],
     callToAction: [
       // CTA section templates will go here
     ],

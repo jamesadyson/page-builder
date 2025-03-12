@@ -9,9 +9,11 @@ import './components/icons'
 
 // Register section components
 import TestimonialSection from './components/sections/TestimonialSection.vue'
+import HeroSection from './components/sections/HeroSection.vue'
 
 // Register global components
 Vue.component('TestimonialSection', TestimonialSection)
+Vue.component('HeroSection', HeroSection)
 
 Vue.config.productionTip = false
 
