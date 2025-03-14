@@ -14,12 +14,14 @@ import TestimonialSection from './components/sections/TestimonialSection.vue'
 import HeroSection from './components/sections/HeroSection.vue'
 import FeaturesSection from './components/sections/FeaturesSection.vue'
 import AttentionBarSection from './components/sections/AttentionBarSection.vue'
+import CallToActionSection from './components/sections/CallToActionSection.vue'
 
 // Register global components
 Vue.component('TestimonialSection', TestimonialSection)
 Vue.component('HeroSection', HeroSection)
 Vue.component('FeaturesSection', FeaturesSection)
 Vue.component('AttentionBarSection', AttentionBarSection)
+Vue.component('CallToActionSection', CallToActionSection)
 
 Vue.config.productionTip = false
 

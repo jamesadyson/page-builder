@@ -144,7 +144,21 @@ export default {
     }
   ],
   callToAction: [
-    // CTA section templates will go here
-  ],
+    {
+      id: 'cta-offer-1',
+      name: 'Call to Action 1',
+      thumbnail: '/thumbnails/cta-offer.jpg',
+      component: 'CallToActionSection',
+      data: {
+        heading: 'Ready to fast-track your course success?',
+        description: 'Get the Fast-Track success bundle for only $97 (one-time) for a limited time and launch your course to success in 7 days or less!',
+        regularPrice: 'Normal Price: <s>$297</s>',
+        salePrice: 'Today Only: $97',
+        buttonText: 'Add to my Order (Just $97)',
+        disclaimerText: 'By clicking the button above you agree to be charged $200 now and $200 every year until cancelled',
+        noThanksText: 'No thanks, please do not add this offer to my purchase'
+      }
+    }
+  ]
   // Add more section types as needed
 };

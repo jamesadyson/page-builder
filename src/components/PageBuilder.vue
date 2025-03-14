@@ -377,28 +377,33 @@ export default {
     },
     
     // Section hover methods
-    handleSectionHover(sectionType) {
-      this.currentHoveredSection = sectionType;
-      this.isMouseOverSectionItem = true;
-      
-      // Clear any existing timeout
-      if (this.hoverTimeout) {
-        clearTimeout(this.hoverTimeout);
-      }
-      
-      // Clear close timeout if exists
-      if (this.closeSidebarTimeout) {
-        clearTimeout(this.closeSidebarTimeout);
-        this.closeSidebarTimeout = null;
-      }
-      
-      // Set a new timeout to show the secondary sidebar
-      this.hoverTimeout = setTimeout(() => {
-        if (sectionType === 'testimonials' || sectionType === 'hero' || sectionType === 'features' || sectionType === 'attentionBars') {
-          this.toggleSecondarySidebar(true, sectionType);
-        }
-      }, this.hoverDelay);
-    },
+// Section hover methods
+handleSectionHover(sectionType) {
+  this.currentHoveredSection = sectionType;
+  this.isMouseOverSectionItem = true;
+  
+  // Clear any existing timeout
+  if (this.hoverTimeout) {
+    clearTimeout(this.hoverTimeout);
+  }
+  
+  // Clear close timeout if exists
+  if (this.closeSidebarTimeout) {
+    clearTimeout(this.closeSidebarTimeout);
+    this.closeSidebarTimeout = null;
+  }
+  
+  // Set a new timeout to show the secondary sidebar
+  this.hoverTimeout = setTimeout(() => {
+    if (sectionType === 'testimonials' || 
+        sectionType === 'hero' || 
+        sectionType === 'features' || 
+        sectionType === 'attentionBars' ||
+        sectionType === 'callToAction') {
+      this.toggleSecondarySidebar(true, sectionType);
+    }
+  }, this.hoverDelay);
+},
     
     // Improved drag and drop methods
     startDrag(event, index) {
