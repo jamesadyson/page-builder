@@ -86,10 +86,11 @@ export default {
       }
       
       // For section components, we need to store format data differently
-      if (element.component === 'HeroSection' || 
-          element.component === 'TestimonialSection' || 
-          element.component === 'FeaturesSection' ||
-          element.component === 'AttentionBarSection') {
+if (element.component === 'HeroSection' || 
+    element.component === 'TestimonialSection' || 
+    element.component === 'FeaturesSection' ||
+    element.component === 'AttentionBarSection' ||
+    element.component === 'CallToActionSection') {
         // For sections, store format under fieldNameFormat
         const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
         

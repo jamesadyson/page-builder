@@ -297,11 +297,17 @@ export default {
 
     // Get the field-specific format data or use section defaults
     fieldFormatData() {
-      if (!this.activeField) return this.baseFormatData;
-      
-      // If we have a field selected, and that field has format data, use it
-      const fieldPath = this.activeField.fieldPath;
-      const fieldName = this.activeField.fieldName;
+  if (!this.activeField) return this.baseFormatData;
+  
+  // If we have a field selected, and that field has format data, use it
+  const fieldPath = this.activeField.fieldPath;
+  const fieldName = this.activeField.fieldName;
+  
+  // Check for direct format key in section data (added this check)
+  const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
+  if (this.elementData && this.elementData.data && this.elementData.data[formatKey]) {
+    return this.elementData.data[formatKey];
+  }
       
       // Handle formatting for specific field
       if (fieldPath && this.elementData && this.elementData.data) {
@@ -421,7 +427,8 @@ export default {
     },
     
     // Central method to update format properties
-    updateFormatProperty(property, value) {
+
+updateFormatProperty(property, value) {
   // Prepare the update object
   let updateData;
   

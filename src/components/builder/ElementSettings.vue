@@ -8,7 +8,7 @@
       <!-- Element specific settings -->
       <text-format-controls 
         v-if="isTextElement()"
-        :element-data="element.data"
+       :element-data="element"
         :active-field="activeField"
         @update="updateElementData"
       />
@@ -65,7 +65,8 @@
         if (componentName === 'HeroSection' || 
             componentName === 'TestimonialSection' || 
             componentName === 'FeaturesSection' ||
-            componentName === 'AttentionBarSection') {
+            componentName === 'AttentionBarSection' ||
+            componentName === 'CallToActionSection') {
           if (!this.element.data) return false;
           
           // If we have an active field within the section, show formatting options
