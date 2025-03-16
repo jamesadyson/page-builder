@@ -7,11 +7,12 @@
       
       <!-- Element specific settings -->
       <text-format-controls 
-        v-if="isTextElement()"
-       :element-data="element"
-        :active-field="activeField"
-        @update="updateElementData"
-      />
+  v-if="isTextElement()"
+  :element-data="element"
+  :active-field="activeField"
+  @update="updateElementData"
+  @reset-field="resetFieldSelection"
+/>
     </div>
   </template>
   
@@ -84,13 +85,19 @@
           );
         }
         
+        
         return false;
       },
   
       // Pass update event to parent
       updateElementData(data) {
-        this.$emit('update', data);
-      }
+  console.log('ElementSettings: updateElementData called with:', data);
+  this.$emit('update', data);
+},
+
+resetFieldSelection() {
+    this.$emit('reset-field');
+  }
     }
   };
   </script>

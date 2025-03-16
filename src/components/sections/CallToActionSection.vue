@@ -185,28 +185,28 @@
       
       // Style handling for fields
       getFieldClasses(fieldName) {
-        // Start with basic selection classes
-        const classes = {
-          'field-selected': this.selectedField === fieldName,
-          'field-editable': true
-        };
-        
-        // Add format classes from section data
-        const formatKey = fieldName + 'Format';
-        if (this.sectionData[formatKey]) {
-          const format = this.sectionData[formatKey];
-          // Add each format class if available
-          if (format.fontSize) classes[format.fontSize] = true;
-          if (format.textAlign) classes['text-' + format.textAlign] = true;
-          if (format.isBold) classes['font-bold'] = true;
-          if (format.isItalic) classes['italic'] = true;
-          if (format.isUnderline) classes['underline'] = true;
-          if (format.lineHeight) classes[format.lineHeight] = true;
-          if (format.letterSpacing) classes[format.letterSpacing] = true;
-        }
-        
-        return classes;
-      },
+  // Start with basic selection classes
+  const classes = {
+    'field-selected': this.selectedField === fieldName,
+    'field-editable': true
+  };
+  
+  // Add format classes from section data
+  const formatKey = fieldName + 'Format';
+  if (this.sectionData[formatKey]) {
+    const format = this.sectionData[formatKey];
+    // Add each format class if available
+    if (format.fontSize) classes[format.fontSize] = true;
+    if (format.textAlign) classes['text-' + format.textAlign] = true;
+    if (format.isBold) classes['font-bold'] = true;
+    if (format.isItalic) classes['italic'] = true;
+    if (format.isUnderline) classes['underline'] = true;
+    if (format.lineHeight) classes[format.lineHeight] = true;
+    if (format.letterSpacing) classes[format.letterSpacing] = true;
+  }
+  
+  return classes;
+},
   
       getFieldStyles(fieldName) {
         const styles = {};

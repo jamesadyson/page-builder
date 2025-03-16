@@ -301,12 +301,18 @@ export default {
   
   // If we have a field selected, and that field has format data, use it
   const fieldPath = this.activeField.fieldPath;
-  const fieldName = this.activeField.fieldName;
   
-  // Check for direct format key in section data (added this check)
+  // Check for direct format key in section data
   const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
   if (this.elementData && this.elementData.data && this.elementData.data[formatKey]) {
+    console.log('Found field format data:', this.elementData.data[formatKey]);
     return this.elementData.data[formatKey];
+  }
+
+    // If formatOverrides are provided with the field, use those
+    if (this.activeField.formatOverrides) {
+    console.log('Using format overrides:', this.activeField.formatOverrides);
+    return this.activeField.formatOverrides;
   }
       
       // Handle formatting for specific field
@@ -428,28 +434,14 @@ export default {
     
     // Central method to update format properties
 
-updateFormatProperty(property, value) {
-  // Prepare the update object
-  let updateData;
+    updateFormatProperty(property, value) {
+  console.log(`TextFormatControls: Updating ${property} to ${value}`);
   
-  if (this.activeField) {
-    // For a specific field in a section
-    updateData = {
-      elementData: this.elementData,
-      activeField: this.activeField,
-      formatProperty: property,
-      formatValue: value
-    };
-  } else {
-    // For regular elements or section-wide changes
-    const formatData = { ...this.fieldFormatData };
-    formatData[property] = value;
-    
-    updateData = formatData;
-  }
-  
-  // Update via parent component
-  this.$emit('update', updateData);
+  // Simply emit the property and value to update
+  this.$emit('update', {
+    formatProperty: property,
+    formatValue: value
+  });
 },
     
     // Helper labels and status methods

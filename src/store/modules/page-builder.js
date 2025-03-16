@@ -1,4 +1,5 @@
 // src/store/modules/page-builder.js
+import Vue from 'vue';
 import sectionTemplates from './section-templates';
 
 export default {
@@ -22,8 +23,12 @@ export default {
     ],
     sectionTemplates,
     sidebarView: 'layout', // Track the current sidebar view
+      currentEditingField: null, // Add this line
   },
   mutations: {
+    SET_CURRENT_EDITING_FIELD(state, fieldInfo) {
+      state.currentEditingField = fieldInfo;
+    },
     ADD_CANVAS_ELEMENT(state, element) {
       state.canvasElements.push({
         component: element.component,
@@ -76,9 +81,12 @@ export default {
       state.sidebarView = view;
     },
     UPDATE_FIELD_FORMAT(state, { index, fieldPath, formatData }) {
+      console.log(`Store: Updating format for field ${fieldPath}:`, formatData);
+      
       if (index === null || index >= state.canvasElements.length) return;
       
       const element = state.canvasElements[index];
+      console.log('Element before update:', JSON.parse(JSON.stringify(element)));
       
       // Ensure element data exists
       if (!element.data) {
@@ -86,11 +94,11 @@ export default {
       }
       
       // For section components, we need to store format data differently
-if (element.component === 'HeroSection' || 
-    element.component === 'TestimonialSection' || 
-    element.component === 'FeaturesSection' ||
-    element.component === 'AttentionBarSection' ||
-    element.component === 'CallToActionSection') {
+      if (element.component === 'HeroSection' || 
+          element.component === 'TestimonialSection' || 
+          element.component === 'FeaturesSection' ||
+          element.component === 'AttentionBarSection' ||
+          element.component === 'CallToActionSection') {
         // For sections, store format under fieldNameFormat
         const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
         
@@ -105,18 +113,16 @@ if (element.component === 'HeroSection' ||
           ...formatData
         };
         
+        console.log(`Store: Updated ${formatKey} to:`, element.data[formatKey]);
+        console.log('Element after update:', JSON.parse(JSON.stringify(element)));
         return;
       }
       
-      // For basic elements or if no field path, update normally
-      if (!fieldPath) {
-        // Update entire element format
-        element.data = {
-          ...element.data,
-          ...formatData
-        };
-        return;
-      }
+      // For basic elements, update normally
+      element.data = {
+        ...element.data,
+        ...formatData
+      };
       
       // Handle nested fields (e.g., testimonials.0.author)
       // Split the path into parts
@@ -153,9 +159,45 @@ if (element.component === 'HeroSection' ||
         ...target[finalProp + 'Format'],
         ...formatData
       };
-    }
+    },
+    UPDATE_FIELD_FORMAT_DIRECT(state, { formatProperty, formatValue }) {
+      if (!state.currentEditingField || state.selectedElementIndex === null) return;
+      
+      const element = state.canvasElements[state.selectedElementIndex];
+      const fieldPath = state.currentEditingField.fieldPath;
+      
+      if (!element || !element.data) return;
+      
+      // Create format key based on field path
+      const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
+      
+      console.log('Store: Directly updating format for', formatKey, formatProperty, formatValue);
+      console.log('Element data before:', JSON.stringify(element.data));
+      
+      // Check if the format key exists
+      if (!element.data[formatKey]) {
+        // Create a new object with Vue.set to ensure reactivity
+        Vue.set(element.data, formatKey, {});
+      }
+      
+      // Update the specific property
+      Vue.set(element.data[formatKey], formatProperty, formatValue);
+      
+      console.log('Element data after:', JSON.stringify(element.data));
+      
+      // Force a reactivity update by recreating the element
+      const updatedElement = { ...element };
+      Vue.set(state.canvasElements, state.selectedElementIndex, updatedElement);
+    },
   },
   actions: {
+    setCurrentEditingField({ commit }, fieldInfo) {
+      commit('SET_CURRENT_EDITING_FIELD', fieldInfo);
+    },
+    
+    updateFieldFormat({ commit }, { formatProperty, formatValue }) {
+      commit('UPDATE_FIELD_FORMAT_DIRECT', { formatProperty, formatValue });
+    },
     // Set the sidebar view
     setSidebarView({ commit }, view) {
       commit('SET_SIDEBAR_VIEW', view);
@@ -191,52 +233,30 @@ if (element.component === 'HeroSection' ||
     },
     
     updateElementData({ commit, state }, updateData) {
+      console.log('Store: updateElementData called with:', updateData);
+      
       if (state.selectedElementIndex === null) return;
       
       // Handle updating specific field within a section
       if (updateData && updateData.activeField) {
-        const { elementData, activeField, formatProperty, formatValue } = updateData;
+        const { formatProperty, formatValue } = updateData;
         
-        // Update format data for the specific field
-        commit('UPDATE_FIELD_FORMAT', {
-          index: state.selectedElementIndex,
-          fieldPath: activeField.fieldPath,
-          formatData: { [formatProperty]: formatValue }
-        });
-        
+        if (formatProperty && formatValue !== undefined) {
+          console.log(`Store: Updating field format: ${formatProperty} to ${formatValue}`);
+          
+          // Use the direct update mutation for better reactivity
+          commit('UPDATE_FIELD_FORMAT_DIRECT', { 
+            formatProperty, 
+            formatValue 
+          });
+        }
         return;
       }
       
-      // Handle regular element updates (for backward compatibility)
-      const element = state.canvasElements[state.selectedElementIndex];
-      let updatedData = updateData;
-      
-      // Special handling for section components
-      if (element.component === 'HeroSection' || 
-          element.component === 'TestimonialSection' || 
-          element.component === 'FeaturesSection' ||
-          element.component === 'AttentionBarSection') {
-        // For section components, we need to merge the formatting properties with existing data
-        // rather than replacing the entire data object
-        updatedData = {
-          ...element.data,  // Keep all existing section data
-          
-          // Apply formatting properties if they exist in the new data
-          ...(updateData.fontSize && { fontSize: updateData.fontSize }),
-          ...(updateData.textAlign && { textAlign: updateData.textAlign }),
-          ...(updateData.isBold !== undefined && { isBold: updateData.isBold }),
-          ...(updateData.isItalic !== undefined && { isItalic: updateData.isItalic }),
-          ...(updateData.isUnderline !== undefined && { isUnderline: updateData.isUnderline }),
-          ...(updateData.textColor && { textColor: updateData.textColor }),
-          ...(updateData.lineHeight && { lineHeight: updateData.lineHeight }),
-          ...(updateData.letterSpacing && { letterSpacing: updateData.letterSpacing })
-        };
-      }
-      
-      // Update the element with either the new data or merged data
+      // For regular element updates
       commit('UPDATE_CANVAS_ELEMENT', {
         index: state.selectedElementIndex,
-        data: updatedData
+        data: updateData
       });
     },
     
@@ -332,6 +352,7 @@ if (element.component === 'HeroSection' ||
     }
   },
   getters: {
+    getCurrentEditingField: state => state.currentEditingField,
     getCanvasElements: state => state.canvasElements,
     getSelectedElement: state => {
       if (state.selectedElementIndex !== null) {

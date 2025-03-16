@@ -65,13 +65,14 @@
         />
   
         <!-- Element Settings -->
-        <element-settings
-          v-if="selectedElementIndex !== null && currentSidebarView === 'layout'"
-          :element="canvasElements[selectedElementIndex]"
-          :element-index="selectedElementIndex"
-          :active-field="activeFieldForEditing"
-          @update="updateElementData"
-        />
+  <element-settings
+  v-if="selectedElementIndex !== null && currentSidebarView === 'layout'"
+  :element="canvasElements[selectedElementIndex]"
+  :element-index="selectedElementIndex"
+  :active-field="activeFieldForEditing"
+  @update="handleFormatUpdate"
+  @reset-field="activeFieldForEditing = null"
+/>
       </div>
 
       <!-- Main Canvas Area -->
@@ -176,12 +177,23 @@ export default {
     }
   },
   methods: {
-    ...mapActions('pageBuilder', [
-      'removeElement', 
-      'selectElement',
-      'updateElementData',
-      'setSidebarView'
-    ]),
+  ...mapActions('pageBuilder', [
+    'removeElement', 
+    'selectElement',
+    'updateElementData',
+    'setSidebarView'
+  ]),
+  
+  // Add this new method
+  handleFormatUpdate(data) {
+  console.log('PageBuilder: Format update:', data.formatProperty, data.formatValue);
+  
+  // Use the new direct update method
+  this.$store.dispatch('pageBuilder/updateFieldFormat', {
+    formatProperty: data.formatProperty,
+    formatValue: data.formatValue
+  });
+},
 
     toggleSidebarView(view) {
       // First update the local state
@@ -263,15 +275,20 @@ export default {
 
     // Method to handle selection of a specific field within a section
     selectFieldFromCanvas(index, fieldInfo) {
-      // First select the element (section) in the store
-      this.selectElement(index);
-      
-      // Set the active field
-      this.activeFieldForEditing = fieldInfo;
-      
-      // Switch to layout view to show settings
-      this.toggleSidebarView('layout');
-    },
+  console.log('PageBuilder: Field selected:', index, fieldInfo);
+  
+  // First select the element (section) in the store
+  this.selectElement(index);
+  
+  // Set the active field in the store
+  this.$store.dispatch('pageBuilder/setCurrentEditingField', fieldInfo);
+  
+  // Also keep a local copy for the UI
+  this.activeFieldForEditing = fieldInfo;
+  
+  // Switch to layout view to show settings
+  this.toggleSidebarView('layout');
+},
         
     // FIXED: Improved method to insert a section template
     insertSectionTemplate(template) {

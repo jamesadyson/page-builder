@@ -256,15 +256,15 @@ export default {
     },
     
     // NEW: Updated getFieldClasses to include format classes
-    getFieldClasses(fieldPath) {
+    getFieldClasses(fieldName) {
   // Start with basic selection classes
   const classes = {
-    'field-selected': this.selectedField === fieldPath,
+    'field-selected': this.selectedField === fieldName,
     'field-editable': true
   };
   
   // Add format classes from section data
-  const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
+  const formatKey = fieldName + 'Format';
   if (this.sectionData[formatKey]) {
     const format = this.sectionData[formatKey];
     // Add each format class if available

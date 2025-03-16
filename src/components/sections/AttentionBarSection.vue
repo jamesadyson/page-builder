@@ -23,15 +23,16 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         <span 
-          contenteditable="true"
-          @blur="updateText"
-          @focus="selectField('text')"
-          @click.stop="selectField('text')"
-          :class="getFieldClasses('text')"
-          :style="getFieldStyles('text')"
-        >
-          {{ sectionData.text }}
-        </span>
+  contenteditable="true"
+  @blur="updateText"
+  @focus="selectField('text')"
+  @click.stop="selectField('text')"
+  :class="getFieldClasses('text')"
+  :style="getFieldStyles('text')"
+  :data-debug="JSON.stringify(getFieldClasses('text'))"
+>
+  {{ sectionData.text }}
+</span>
       </section>
     </div>
   </template>
@@ -46,10 +47,31 @@
       }
     },
     data() {
-      return {
-        selectedField: null
-      };
-    },
+  return {
+    selectedField: null,
+    // Add this to help track format updates
+    lastFormatUpdate: Date.now()
+  };
+},
+
+watch: {
+  'sectionData.textFormat': {
+    deep: true,
+    immediate: true,
+    handler(newValue) {
+      console.log('AttentionBarSection: textFormat changed:', newValue);
+      this.lastFormatUpdate = Date.now();
+    }
+  },
+  sectionData: {
+    deep: true,
+    handler() {
+      console.log('AttentionBarSection: sectionData changed');
+      this.lastFormatUpdate = Date.now();
+    }
+  }
+},
+
     methods: {
       // General section selection
       selectSection() {
@@ -89,28 +111,37 @@
       
       // Style handling for fields
       getFieldClasses(fieldName) {
-        // Start with basic selection classes
-        const classes = {
-          'field-selected': this.selectedField === fieldName,
-          'field-editable': true
-        };
-        
-        // Add format classes from section data
-        const formatKey = fieldName + 'Format';
-        if (this.sectionData[formatKey]) {
-          const format = this.sectionData[formatKey];
-          // Add each format class if available
-          if (format.fontSize) classes[format.fontSize] = true;
-          if (format.textAlign) classes['text-' + format.textAlign] = true;
-          if (format.isBold) classes['font-bold'] = true;
-          if (format.isItalic) classes['italic'] = true;
-          if (format.isUnderline) classes['underline'] = true;
-          if (format.lineHeight) classes[format.lineHeight] = true;
-          if (format.letterSpacing) classes[format.letterSpacing] = true;
-        }
-        
-        return classes;
-      },
+  // Force reactivity updates
+  const timestamp = this.lastFormatUpdate;
+  
+  // Start with basic selection classes
+  const classes = {
+    'field-selected': this.selectedField === fieldName,
+    'field-editable': true
+  };
+  
+  // Add format classes from section data
+  const formatKey = fieldName + 'Format';
+  
+  // Log the actual data to see what's happening
+  console.log('AttentionBarSection formats:', JSON.stringify(this.sectionData));
+  
+  if (this.sectionData && this.sectionData[formatKey]) {
+    const format = this.sectionData[formatKey];
+    
+    // Check if format is a reactive object and handle it accordingly
+    if (format.hasOwnProperty('fontSize')) classes[format.fontSize] = true;
+    if (format.hasOwnProperty('textAlign')) classes['text-' + format.textAlign] = true;
+    if (format.hasOwnProperty('isBold') && format.isBold) classes['font-bold'] = true;
+    if (format.hasOwnProperty('isItalic') && format.isItalic) classes['italic'] = true;
+    if (format.hasOwnProperty('isUnderline') && format.isUnderline) classes['underline'] = true;
+    if (format.hasOwnProperty('lineHeight')) classes[format.lineHeight] = true;
+    if (format.hasOwnProperty('letterSpacing')) classes[format.letterSpacing] = true;
+  }
+  
+  console.log('Returning classes:', classes);
+  return classes;
+},
   
       getFieldStyles(fieldName) {
         const styles = {};

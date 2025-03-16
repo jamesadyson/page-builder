@@ -58,19 +58,19 @@
 export default {
   name: 'SecondarySidebar',
   props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    sectionType: {
-      type: String,
-      required: true
-    },
-    templates: {
-      type: Array,
-      default: () => []
-    }
+  visible: {
+    type: Boolean,
+    default: false
   },
+  sectionType: {
+    type: String,
+    default: ''  // Changed to provide a default and removed 'required'
+  },
+  templates: {
+    type: Array,
+    default: () => []
+  }
+},
   computed: {
     sectionTitle() {
       // Convert camelCase to Title Case with spaces
