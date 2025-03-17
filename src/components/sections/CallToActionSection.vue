@@ -118,10 +118,21 @@
       }
     },
     data() {
-      return {
-        selectedField: null
-      };
-    },
+  return {
+    selectedField: null,
+    lastFormatUpdate: Date.now()
+  };
+},
+
+watch: {
+  sectionData: {
+    deep: true,
+    handler() {
+      console.log('SectionName: sectionData changed');
+      this.lastFormatUpdate = Date.now();
+    }
+  }
+},
     methods: {
       // General section selection
       selectSection() {
@@ -130,17 +141,16 @@
       },
       
       // Field-specific selection method
-      selectField(fieldName) {
-        this.selectedField = fieldName;
-        
-        // Emit event with field information for parent
-        this.$emit('select-field', {
-          fieldPath: fieldName,
-          fieldName: fieldName,
-          // Optional formatting overrides can be passed here
-          formatOverrides: this.getFieldFormatOverrides(fieldName)
-        });
-      },
+      selectField(fieldPath) {
+  this.selectedField = fieldPath;
+  
+  // Emit event with field information for parent
+  this.$emit('select-field', {
+    fieldPath: fieldPath,
+    fieldName: this.getFieldName(fieldPath),
+    formatOverrides: this.getFieldFormatOverrides(fieldPath)
+  });
+},
       
       // Get any format overrides for a specific field
       getFieldFormatOverrides(fieldName) {
@@ -185,6 +195,9 @@
       
       // Style handling for fields
       getFieldClasses(fieldName) {
+  // Force reactivity updates
+  const timestamp = this.lastFormatUpdate;
+  
   // Start with basic selection classes
   const classes = {
     'field-selected': this.selectedField === fieldName,
@@ -192,33 +205,35 @@
   };
   
   // Add format classes from section data
-  const formatKey = fieldName + 'Format';
-  if (this.sectionData[formatKey]) {
+  const formatKey = fieldName.replace(/\./g, '_') + 'Format';
+  
+  if (this.sectionData && this.sectionData[formatKey]) {
     const format = this.sectionData[formatKey];
-    // Add each format class if available
-    if (format.fontSize) classes[format.fontSize] = true;
-    if (format.textAlign) classes['text-' + format.textAlign] = true;
-    if (format.isBold) classes['font-bold'] = true;
-    if (format.isItalic) classes['italic'] = true;
-    if (format.isUnderline) classes['underline'] = true;
-    if (format.lineHeight) classes[format.lineHeight] = true;
-    if (format.letterSpacing) classes[format.letterSpacing] = true;
+    
+    // Check if format properties exist and apply them
+    if (format.hasOwnProperty('fontSize')) classes[format.fontSize] = true;
+    if (format.hasOwnProperty('textAlign')) classes['text-' + format.textAlign] = true;
+    if (format.hasOwnProperty('isBold') && format.isBold) classes['font-bold'] = true;
+    if (format.hasOwnProperty('isItalic') && format.isItalic) classes['italic'] = true;
+    if (format.hasOwnProperty('isUnderline') && format.isUnderline) classes['underline'] = true;
+    if (format.hasOwnProperty('lineHeight')) classes[format.lineHeight] = true;
+    if (format.hasOwnProperty('letterSpacing')) classes[format.letterSpacing] = true;
   }
   
   return classes;
 },
   
-      getFieldStyles(fieldName) {
-        const styles = {};
-        
-        // Add text color if available
-        const formatKey = fieldName + 'Format';
-        if (this.sectionData[formatKey] && this.sectionData[formatKey].textColor) {
-          styles.color = this.sectionData[formatKey].textColor;
-        }
-        
-        return styles;
-      },
+getFieldStyles(fieldPath) {
+  const styles = {};
+  
+  // Add text color if available
+  const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
+  if (this.sectionData[formatKey] && this.sectionData[formatKey].textColor) {
+    styles.color = this.sectionData[formatKey].textColor;
+  }
+  
+  return styles;
+},
       
       // Update methods for each field
       updateHeading(event) {

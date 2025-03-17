@@ -188,7 +188,7 @@ export default {
   handleFormatUpdate(data) {
   console.log('PageBuilder: Format update:', data.formatProperty, data.formatValue);
   
-  // Use the new direct update method
+  // Use the direct update method
   this.$store.dispatch('pageBuilder/updateFieldFormat', {
     formatProperty: data.formatProperty,
     formatValue: data.formatValue
