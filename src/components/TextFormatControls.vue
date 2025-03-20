@@ -437,11 +437,16 @@ export default {
     updateFormatProperty(property, value) {
   console.log(`TextFormatControls: Updating ${property} to ${value}`);
   
-  // Simply emit the property and value to update
+  // Emit the update event with clear property name and value
   this.$emit('update', {
     formatProperty: property,
     formatValue: value
   });
+  
+  // For immediate visual feedback, update local override if available
+  if (this.activeField && this.activeField.formatOverrides) {
+    this.$set(this.activeField.formatOverrides, property, value);
+  }
 },
     
     // Helper labels and status methods

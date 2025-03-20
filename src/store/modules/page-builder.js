@@ -160,35 +160,37 @@ export default {
         ...formatData
       };
     },
-    UPDATE_FIELD_FORMAT_DIRECT(state, { formatProperty, formatValue }) {
-      if (!state.currentEditingField || state.selectedElementIndex === null) return;
-      
-      const element = state.canvasElements[state.selectedElementIndex];
-      const fieldPath = state.currentEditingField.fieldPath;
-      
-      if (!element || !element.data) return;
-      
-      // Create format key based on field path
-      const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
-      
-      console.log('Store: Directly updating format for', formatKey, formatProperty, formatValue);
-      console.log('Element data before:', JSON.stringify(element.data));
-      
-      // Check if the format key exists
-      if (!element.data[formatKey]) {
-        // Create a new object with Vue.set to ensure reactivity
-        Vue.set(element.data, formatKey, {});
-      }
-      
-      // Update the specific property
-      Vue.set(element.data[formatKey], formatProperty, formatValue);
-      
-      console.log('Element data after:', JSON.stringify(element.data));
-      
-      // Force a reactivity update by recreating the element
-      const updatedElement = { ...element };
-      Vue.set(state.canvasElements, state.selectedElementIndex, updatedElement);
-    },
+    
+UPDATE_FIELD_FORMAT_DIRECT(state, { formatProperty, formatValue }) {
+  if (!state.currentEditingField || state.selectedElementIndex === null) return;
+  
+  const element = state.canvasElements[state.selectedElementIndex];
+  const fieldPath = state.currentEditingField.fieldPath;
+  
+  if (!element || !element.data) return;
+  
+  // Create format key based on field path
+  const formatKey = fieldPath + 'Format';
+  
+  console.log('Store: Directly updating format for', formatKey, formatProperty, formatValue);
+  console.log('Element data before:', JSON.stringify(element.data));
+  
+  // Ensure the format key object exists
+  if (!element.data[formatKey]) {
+    // Create a new object with Vue.set to ensure reactivity
+    Vue.set(element.data, formatKey, {});
+  }
+  
+  // Update the specific property
+  Vue.set(element.data[formatKey], formatProperty, formatValue);
+  
+  console.log('Element data after:', JSON.stringify(element.data));
+  
+  // Force a reactivity update by creating a new object
+  // This is important to ensure Vue detects the change
+  const updatedElement = { ...element };
+  Vue.set(state.canvasElements, state.selectedElementIndex, updatedElement);
+},
   },
   actions: {
     setCurrentEditingField({ commit }, fieldInfo) {

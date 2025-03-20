@@ -28,15 +28,15 @@
         </p>
         <div class="text-center max-w-6xl mx-auto">
           <h2 
-            class="text-center font-bold w-full md:max-w-2xl lg:max-w-6xl leading-[1.2] md:leading-[1.1] lg:leading-[1.1] text-4xl md:text-5xl lg:text-5xl xl:text-6xl tracking-[-0.7px] md:tracking-[-1px] lg:tracking-[-1.3px] text-gray-950 mx-auto break-words mb-4"
-            contenteditable="true"
-            @blur="updateHeading"
-            @focus="selectField('heading')"
-            @click.stop="selectField('heading')"
-            :class="getFieldClasses('heading')"
-            :style="getFieldStyles('heading')">
-            {{ sectionData.heading }}
-          </h2>
+  class="text-center font-bold w-full md:max-w-2xl lg:max-w-6xl leading-[1.2] md:leading-[1.1] lg:leading-[1.1] tracking-[-0.7px] md:tracking-[-1px] lg:tracking-[-1.3px] text-gray-950 mx-auto break-words mb-4"
+  contenteditable="true"
+  @blur="updateHeading"
+  @focus="selectField('heading')"
+  @click.stop="selectField('heading')"
+  :class="getFieldClasses('heading')"
+  :style="getFieldStyles('heading')">
+  {{ sectionData.heading }}
+</h2>
           <p 
             class="mb-6 text-lg md:text-xl text-gray-700 font-medium max-w-2xl mx-auto"
             contenteditable="true"
@@ -124,12 +124,17 @@ watch: {
   sectionData: {
     deep: true,
     handler() {
-      console.log('SectionName: sectionData changed');
+      console.log('HeroSection: sectionData changed');
       this.lastFormatUpdate = Date.now();
     }
   }
 },
   methods: {
+    // Add this helper method to HeroSection.vue
+getFieldName(fieldPath) {
+  const parts = fieldPath.split('.');
+  return parts[parts.length - 1];
+},
     // General section selection
     selectSection() {
       this.$emit('select', this.sectionData);
@@ -158,7 +163,7 @@ watch: {
       // Return field-specific default formatting
       const defaults = {
         heading: {
-          fontSize: 'text-4xl',
+          fontSize: 'text-6xl',
           isBold: true
         },
         subheading: {
@@ -190,29 +195,63 @@ watch: {
   };
   
   // Add format classes from section data
-  const formatKey = fieldName.replace(/\./g, '_') + 'Format';
+  const formatKey = fieldName + 'Format';
+  
+  // For debugging
+  console.log(`Getting classes for ${fieldName}, format key: ${formatKey}`);
+  console.log('Section data:', JSON.stringify(this.sectionData));
   
   if (this.sectionData && this.sectionData[formatKey]) {
     const format = this.sectionData[formatKey];
+    console.log(`Format data found:`, format);
+    
+    // Add default font size if none exists yet
+    if (!format.hasOwnProperty('fontSize')) {
+      if (fieldName === 'heading') {
+        classes['text-4xl'] = true;
+      } else if (fieldName === 'subheading') {
+        classes['text-xl'] = true;
+      } else if (fieldName === 'description') {
+        classes['text-lg'] = true;
+      } else {
+        classes['text-base'] = true;
+      }
+    } else {
+      // Apply the stored font size
+      classes[format.fontSize] = true;
+      console.log(`Applied font size: ${format.fontSize}`);
+    }
     
     // Check if format properties exist and apply them
-    if (format.hasOwnProperty('fontSize')) classes[format.fontSize] = true;
     if (format.hasOwnProperty('textAlign')) classes['text-' + format.textAlign] = true;
     if (format.hasOwnProperty('isBold') && format.isBold) classes['font-bold'] = true;
     if (format.hasOwnProperty('isItalic') && format.isItalic) classes['italic'] = true;
     if (format.hasOwnProperty('isUnderline') && format.isUnderline) classes['underline'] = true;
     if (format.hasOwnProperty('lineHeight')) classes[format.lineHeight] = true;
     if (format.hasOwnProperty('letterSpacing')) classes[format.letterSpacing] = true;
+  } else {
+    // Apply default styles if no format data exists
+    console.log(`No format data found for ${formatKey}, applying defaults`);
+    if (fieldName === 'heading') {
+      classes['text-6xl'] = true;
+    } else if (fieldName === 'subheading') {
+      classes['text-xl'] = true;
+    } else if (fieldName === 'description') {
+      classes['text-lg'] = true;
+    } else {
+      classes['text-base'] = true;
+    }
   }
   
+  console.log(`Final classes for ${fieldName}:`, classes);
   return classes;
 },
 
-getFieldStyles(fieldPath) {
+getFieldStyles(fieldName) {
   const styles = {};
   
   // Add text color if available
-  const formatKey = fieldPath.replace(/\./g, '_') + 'Format';
+  const formatKey = fieldName + 'Format';
   if (this.sectionData[formatKey] && this.sectionData[formatKey].textColor) {
     styles.color = this.sectionData[formatKey].textColor;
   }
