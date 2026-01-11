@@ -14,9 +14,24 @@
       </button>
     </div>
     
-    <section class="relative pt-24 pb-32 bg-white overflow-hidden group" @click.stop="selectSection">
-      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-50 opacity-50 w-[500px] h-[500px] rounded-full"></div>
-      <div class="relative z-10 container px-4 mx-auto">
+    <section 
+  class="relative pt-24 pb-32 bg-white overflow-hidden group" 
+  :class="{'selected-section': isSelected}"
+  :style="getSectionBackgroundStyle()"
+  @click.stop="selectSection">
+
+  <!-- Background overlay for image backgrounds -->
+  <div 
+    v-if="sectionData.backgroundType === 'image' && sectionData.backgroundImage"
+    class="section-overlay"
+    :style="getOverlayStyle()">
+  </div>
+
+  <!-- Keep existing background shape for now -->
+  <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-50 opacity-50 w-[500px] h-[500px] rounded-full"></div>
+  
+  <!-- Wrap the existing content in a div with section-content class -->
+  <div class="section-content relative z-10 container px-4 mx-auto">
         <p 
           class="mb-4 text-lg text-gray-900 font-medium text-center"
           contenteditable="true"
@@ -162,8 +177,12 @@
 </template>
 
 <script>
+import SectionBackgroundMixin from '@/mixins/SectionBackgroundMixin';
+
+
 export default {
   name: 'TestimonialSection',
+  mixins: [SectionBackgroundMixin],
   props: {
     sectionData: {
       type: Object,

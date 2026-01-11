@@ -1,4 +1,15 @@
 <!-- src/components/sections/HeroSection.vue -->
+ <!-- Background overlay for image backgrounds -->
+<div 
+v-if="sectionData.backgroundType === 'image' && sectionData.backgroundImage"
+class="section-overlay"
+:style="getOverlayStyle()">
+</div>
+
+<!-- Wrap the existing content in a div with section-content class -->
+<div class="section-content">
+<!-- Existing content goes here -->
+</div>
 <template>
   <div class="section-wrapper relative">
     <div class="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex">
@@ -14,7 +25,12 @@
       </button>
     </div>
     
-    <section class="bg-white overflow-hidden pb-10 group" @click.stop="selectSection">
+    <section 
+  class="bg-white overflow-hidden pb-10 group" 
+  :class="{'selected-section': isSelected}"
+  :style="getSectionBackgroundStyle()"
+  @click.stop="selectSection">
+
       <div class="container px-4 mx-auto">
         <p 
           class="text-center mb-2 text-lg md:text-xl font-semibold max-w-2xl mx-auto"
@@ -105,13 +121,20 @@
 </template>
 
 <script>
+import SectionBackgroundMixin from '@/mixins/SectionBackgroundMixin';
+
 export default {
   name: 'HeroSection',
+  mixins: [SectionBackgroundMixin],
   props: {
     sectionData: {
       type: Object,
       required: true
-    }
+    },
+    isSelected: {
+  type: Boolean,
+  default: false
+},
   },
   data() {
   return {
@@ -130,6 +153,117 @@ watch: {
   }
 },
   methods: {
+    // Add this to the methods section in HeroSection.vue
+getOverlayStyle() {
+  if (this.sectionData.backgroundType !== 'image' || !this.sectionData.backgroundImage) {
+    return {};
+  }
+  
+  const opacity = this.sectionData.overlayOpacity !== undefined 
+    ? this.sectionData.overlayOpacity / 100 
+    : 0.3;
+    
+  const overlayColor = this.sectionData.overlayColor || 'rgba(0,0,0,0.3)';
+  
+  // If an rgba color is provided, we need to adjust its opacity
+  if (overlayColor.startsWith('rgba')) {
+    // Extract the rgb part and add our own opacity
+    const rgbPart = overlayColor.substring(0, overlayColor.lastIndexOf(','));
+    return {
+      backgroundColor: `${rgbPart}, ${opacity})`
+    };
+  }
+  
+  // For hex or named colors, convert to rgba
+  return {
+    backgroundColor: this.hexToRgba(overlayColor, opacity)
+  };
+},
+
+// Convert hex or named color to rgba
+hexToRgba(hex, alpha = 1) {
+  // Simple named colors to rgb mapping
+  const namedColors = {
+    black: [0, 0, 0],
+    white: [255, 255, 255],
+    red: [255, 0, 0],
+    green: [0, 128, 0],
+    blue: [0, 0, 255],
+    yellow: [255, 255, 0],
+    purple: [128, 0, 128],
+    gray: [128, 128, 128],
+    orange: [255, 165, 0],
+    pink: [255, 192, 203]
+  };
+  
+  // Check if it's a named color
+  if (namedColors[hex.toLowerCase()]) {
+    const [r, g, b] = namedColors[hex.toLowerCase()];
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  
+  // Handle hex color
+  let c;
+  if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+    c = hex.substring(1).split('');
+    if (c.length === 3) {
+      c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+    }
+    c = '0x' + c.join('');
+    return `rgba(${(c >> 16) & 255}, ${(c >> 8) & 255}, ${c & 255}, ${alpha})`;
+  }
+  
+  // Default fallback
+  return `rgba(0, 0, 0, ${alpha})`;
+},
+    getSectionBackgroundStyle() {
+  const styles = {};
+  
+  // Check background type
+  const backgroundType = this.sectionData.backgroundType || 'solid';
+  
+  if (backgroundType === 'solid') {
+    // Apply solid background color
+    if (this.sectionData.backgroundColor) {
+      styles.backgroundColor = this.sectionData.backgroundColor;
+    }
+  } 
+  else if (backgroundType === 'gradient') {
+    // Apply gradient background
+    const startColor = this.sectionData.backgroundColor || '#3B82F6';
+    const endColor = this.sectionData.gradientEndColor || '#6366F1';
+    const direction = this.getGradientDirection(this.sectionData.gradientDirection || 'to-bottom');
+    
+    styles.background = `linear-gradient(${direction}, ${startColor}, ${endColor})`;
+  } 
+  else if (backgroundType === 'image') {
+    // Apply image background
+    if (this.sectionData.backgroundImage) {
+      styles.backgroundImage = `url('${this.sectionData.backgroundImage}')`;
+      styles.backgroundSize = 'cover';
+      styles.backgroundPosition = 'center';
+      styles.backgroundRepeat = 'no-repeat';
+      styles.position = 'relative';
+    }
+  }
+  
+  return styles;
+},
+
+getGradientDirection(directionValue) {
+  const directionMap = {
+    'to-right': '90deg',
+    'to-left': '270deg',
+    'to-bottom': '180deg',
+    'to-top': '0deg',
+    'to-bottom-right': '135deg',
+    'to-bottom-left': '225deg',
+    'to-top-right': '45deg',
+    'to-top-left': '315deg'
+  };
+  
+  return directionMap[directionValue] || '180deg';
+},
     // Add this helper method to HeroSection.vue
 getFieldName(fieldPath) {
   const parts = fieldPath.split('.');
@@ -316,5 +450,41 @@ getFieldStyles(fieldName) {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.6), 0 0 0 4px rgba(59, 130, 246, 0.2);
   border-radius: 4px;
   background-color: rgba(59, 130, 246, 0.05);
+}
+
+.selected-section {
+  position: relative;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.8);
+  border-radius: 4px;
+  outline: 2px solid transparent;
+}
+
+.selected-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 3px solid rgba(59, 130, 246, 0.8);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* For background image overlays */
+.section-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+}
+
+/* Ensure content shows above overlay */
+.section-content {
+  position: relative;
+  z-index: 1;
 }
 </style>

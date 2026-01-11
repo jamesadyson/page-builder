@@ -14,8 +14,22 @@
         </button>
       </div>
       
-      <section class="text-center py-16 px-8 lg:px-0 max-w-3xl mx-auto rounded-[20px] mb-20 border rounded-xl group" @click.stop="selectSection">
-        <div class="text-center max-w-5xl mx-auto">
+      <section 
+  class="text-center py-16 px-8 lg:px-0 max-w-3xl mx-auto rounded-[20px] mb-20 border rounded-xl group" 
+  :class="{'selected-section': isSelected}"
+  :style="getSectionBackgroundStyle()"
+  @click.stop="selectSection">
+
+    <!-- Background overlay for image backgrounds -->
+    <div 
+    v-if="sectionData.backgroundType === 'image' && sectionData.backgroundImage"
+    class="section-overlay"
+    :style="getOverlayStyle()">
+  </div>
+
+
+       <!-- Wrap the existing content in a div with section-content class -->
+  <div class="section-content text-center max-w-5xl mx-auto">
           <h2 
             class="text-center font-bold w-full max-w-md md:max-w-2xl lg:max-w-3xl md:leading-tight lg:leading-[1.1] text-3xl md:text-4xl lg:text-5xl tracking-[-0.7px] md:tracking-[-1px] lg:tracking-[-1.3px] text-gray-950 mx-auto break-words mb-2 md:mb-3"
             contenteditable="true"
@@ -109,8 +123,11 @@
   </template>
   
   <script>
+  import SectionBackgroundMixin from '@/mixins/SectionBackgroundMixin';
+
   export default {
     name: 'CallToActionSection',
+    mixins: [SectionBackgroundMixin],
     props: {
       sectionData: {
         type: Object,

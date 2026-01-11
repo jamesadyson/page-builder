@@ -160,6 +160,35 @@ export default {
         ...formatData
       };
     },
+
+    UPDATE_SECTION_BACKGROUND(state, { index, backgroundSettings }) {
+      if (index === null || index >= state.canvasElements.length) return;
+      
+      const element = state.canvasElements[index];
+      
+      if (!element.data) {
+        Vue.set(element, 'data', {});
+      }
+      
+      // Update the section's background settings
+      // Use Vue.set to ensure reactivity
+      Object.keys(backgroundSettings).forEach(key => {
+        Vue.set(element.data, key, backgroundSettings[key]);
+      });
+      
+      console.log(`Store: Updated background settings for element ${index}:`, backgroundSettings);
+    },
+    
+    // Add these to the actions section in src/store/modules/page-builder.js
+    
+    updateSectionBackground({ commit, state }, backgroundSettings) {
+      if (state.selectedElementIndex === null) return;
+      
+      commit('UPDATE_SECTION_BACKGROUND', {
+        index: state.selectedElementIndex,
+        backgroundSettings
+      });
+    },
     
 UPDATE_FIELD_FORMAT_DIRECT(state, { formatProperty, formatValue }) {
   if (!state.currentEditingField || state.selectedElementIndex === null) return;

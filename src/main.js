@@ -5,6 +5,7 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import './assets/styles/main.css'
+import './assets/styles/section-styles.css' // Import the section styles
 
 // Register icon components
 import './components/icons'

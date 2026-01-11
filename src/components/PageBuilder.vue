@@ -65,14 +65,15 @@
         />
   
         <!-- Element Settings -->
-  <element-settings
+        <element-settings
   v-if="selectedElementIndex !== null && currentSidebarView === 'layout'"
   :element="canvasElements[selectedElementIndex]"
   :element-index="selectedElementIndex"
   :active-field="activeFieldForEditing"
-  @update="handleFormatUpdate"
+  @update="handleUpdateData"
   @reset-field="activeFieldForEditing = null"
 />
+
       </div>
 
       <!-- Main Canvas Area -->
@@ -183,6 +184,18 @@ export default {
     'updateElementData',
     'setSidebarView'
   ]),
+
+  handleUpdateData(data) {
+  console.log('PageBuilder: Update data:', data);
+  
+  if (data.backgroundSettings) {
+    // This is a background settings update
+    this.$store.dispatch('pageBuilder/updateSectionBackground', data.backgroundSettings);
+  } else {
+    // This is a regular format update
+    this.handleFormatUpdate(data);
+  }
+},
   
   // Add this new method
   handleFormatUpdate(data) {

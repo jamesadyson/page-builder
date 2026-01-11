@@ -48,15 +48,16 @@
             >
               <!-- The actual element component -->
               <component
-                :is="element.component"
-                :element-data="element.data"
-                :section-data="element.data"
-                @select="$emit('select-element', index)"
-                @select-field="$emit('select-field', index, $event)"
-                @delete="$emit('remove-element', index)"
-                @dragstart="$emit('dragstart', $event, index)"
-                :class="{'opacity-50': isDragging && draggedElementIndex === index}"
-              />
+  :is="element.component"
+  :element-data="element.data"
+  :section-data="element.data"
+  :is-selected="selectedElementIndex === index"
+  @select="$emit('select-element', index)"
+  @select-field="$emit('select-field', index, $event)"
+  @delete="$emit('remove-element', index)"
+  @dragstart="$emit('dragstart', $event, index)"
+  :class="{'opacity-50': isDragging && draggedElementIndex === index}"
+/>
               
               <!-- Insertion zone after this element (index: index+1) -->
               <div 

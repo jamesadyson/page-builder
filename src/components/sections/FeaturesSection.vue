@@ -14,8 +14,20 @@
         </button>
       </div>
       
-      <section class="py-16 group" @click.stop="selectSection">
-        <div class="container px-4 mx-auto max-w-4xl">
+      <section 
+  class="py-16 group" 
+  :class="{'selected-section': isSelected}"
+  :style="getSectionBackgroundStyle()"
+  @click.stop="selectSection">
+
+   <!-- Background overlay for image backgrounds -->
+   <div 
+    v-if="sectionData.backgroundType === 'image' && sectionData.backgroundImage"
+    class="section-overlay"
+    :style="getOverlayStyle()">
+  </div>
+         <!-- Wrap the existing content in a div with section-content class -->
+  <div class="section-content container px-4 mx-auto max-w-4xl">
           <div class="mb-8 max-w-3xl mx-auto">
             <h2 
               class="text-center font-bold w-full max-w-md md:max-w-2xl lg:max-w-3xl md:leading-tight lg:leading-[1.1] text-3xl md:text-4xl lg:text-5xl tracking-[-0.7px] md:tracking-[-1px] lg:tracking-[-1.3px] text-gray-950 mx-auto break-words mb-4"
@@ -81,8 +93,12 @@
   </template>
   
   <script>
+  import SectionBackgroundMixin from '@/mixins/SectionBackgroundMixin';
+
+
   export default {
     name: 'FeaturesSection',
+    mixins: [SectionBackgroundMixin],
     props: {
       sectionData: {
         type: Object,

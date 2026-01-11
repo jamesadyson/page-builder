@@ -15,31 +15,48 @@
       </div>
       
       <section 
-        class="text-center py-4 px-4 font-bold flex items-center justify-center w-full text-lg group" 
-        :class="[sectionData.backgroundColor || 'bg-red-500', sectionData.textColor || 'text-white']"
-        @click.stop="selectSection"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <span 
-  contenteditable="true"
-  @blur="updateText"
-  @focus="selectField('text')"
-  @click.stop="selectField('text')"
-  :class="getFieldClasses('text')"
-  :style="getFieldStyles('text')"
-  :data-debug="JSON.stringify(getFieldClasses('text'))"
->
-  {{ sectionData.text }}
-</span>
-      </section>
+  class="text-center py-4 px-4 font-bold flex items-center justify-center w-full text-lg group" 
+  :class="[
+    sectionData.backgroundColor || 'bg-red-500', 
+    sectionData.textColor || 'text-white',
+    {'selected-section': isSelected}
+  ]"
+  :style="getSectionBackgroundStyle()"
+  @click.stop="selectSection">
+  
+  <!-- Background overlay for image backgrounds -->
+  <div 
+    v-if="sectionData.backgroundType === 'image' && sectionData.backgroundImage"
+    class="section-overlay"
+    :style="getOverlayStyle()">
+  </div>
+  
+  <!-- Wrap the existing content in a div with section-content class -->
+  <div class="section-content flex items-center justify-center w-full">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+    <span 
+      contenteditable="true"
+      @blur="updateText"
+      @focus="selectField('text')"
+      @click.stop="selectField('text')"
+      :class="getFieldClasses('text')"
+      :style="getFieldStyles('text')"
+    >
+      {{ sectionData.text }}
+    </span>
+  </div>
+</section>
     </div>
   </template>
   
   <script>
+  import SectionBackgroundMixin from '@/mixins/SectionBackgroundMixin';
+
   export default {
     name: 'AttentionBarSection',
+    mixins: [SectionBackgroundMixin],
     props: {
       sectionData: {
         type: Object,
